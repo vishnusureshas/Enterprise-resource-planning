@@ -1,17 +1,12 @@
 const crypto = require('crypto');
 
-const required = [
-  'JWT_SECRET',
-  'JWT_ACCESS_EXPIRY',
-  'JWT_REFRESH_EXPIRY',
-  'SESSION_SECRET',
-];
+const missing = [];
 
 if (!process.env.DATABASE_URL) {
-  required.push('DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD');
+  for (const key of ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD']) {
+    if (!process.env[key]) missing.push(key);
+  }
 }
-
-const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
   console.error('❌ Missing required environment variables:');
@@ -19,14 +14,27 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-if (process.env.JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET must be at least 32 characters');
-  process.exit(1);
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️ JWT_SECRET auto-generated. Set it in Render Dashboard for persistence across restarts.');
+}
+
+if (!process.env.JWT_ACCESS_EXPIRY) {
+  process.env.JWT_ACCESS_EXPIRY = '15m';
+}
+
+if (!process.env.JWT_REFRESH_EXPIRY) {
+  process.env.JWT_REFRESH_EXPIRY = '7d';
+}
+
+if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+  process.env.SESSION_SECRET = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️ SESSION_SECRET auto-generated. Set it in Render Dashboard for persistence across restarts.');
 }
 
 if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
   process.env.ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
-  console.warn('⚠️ ENCRYPTION_KEY auto-generated. Set in Render Dashboard for persistence across restarts.');
+  console.warn('⚠️ ENCRYPTION_KEY auto-generated. Set it in Render Dashboard for persistence across restarts.');
 }
 
 module.exports = {
