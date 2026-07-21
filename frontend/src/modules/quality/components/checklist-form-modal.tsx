@@ -93,6 +93,7 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
   useEffect(() => { if (!isEdit) setItems([]); }, [open, isEdit]);
 
   const addItem = () => {
+    console.log("addItem clicked, current items:", items.length);
     setItems((prev) => [...prev, { description: "", expectedValue: null, minValue: null, maxValue: null, unit: null, isCritical: false, inspectionMethod: null }]);
   };
 
