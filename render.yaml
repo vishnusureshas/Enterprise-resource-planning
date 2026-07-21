@@ -31,11 +31,9 @@ services:
 
   - type: web
     name: erp-frontend
-    env: node
-    sourceDir: frontend
+    env: docker
+    dockerfilePath: frontend/Dockerfile
     plan: free
-    buildCommand: npm run build
-    startCommand: npm start
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
