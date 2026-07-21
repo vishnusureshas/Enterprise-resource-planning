@@ -134,7 +134,7 @@ app.get('/api/health', async (req, res) => {
   const dbHealthy = await require('./config/db').healthCheck();
   const redisHealthy = redis.status === 'ready';
 
-  const healthy = dbHealthy && redisHealthy;
+  const healthy = dbHealthy;
 
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'healthy' : 'unhealthy',
