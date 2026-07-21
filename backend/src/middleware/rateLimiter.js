@@ -28,7 +28,7 @@ const createRateLimiter = (options = {}) => {
 
   const limiterOptions = { ...defaultOptions, ...options };
 
-  if (env.nodeEnv === 'production') {
+  if (env.nodeEnv === 'production' && redis.status === 'ready') {
     limiterOptions.store = new RedisStore({
       sendCommand: (...args) => redis.call(...args),
       prefix: 'ratelimit:',
