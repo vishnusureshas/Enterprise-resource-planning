@@ -21,6 +21,7 @@ import {
   ScrollText,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Vendors", path: "/vendors", icon: Building2, roles: ["admin", "procurement", "finance"] },
   { label: "Finance", path: "/finance", icon: Landmark, roles: ["admin", "finance"] },
   { label: "Manufacturing", path: "/manufacturing", icon: Factory, roles: ["admin", "production"] },
+  { label: "Quality", path: "/quality", icon: ShieldCheck, roles: ["admin", "production", "manager"] },
   { label: "CRM", path: "/crm", icon: TrendingUp, roles: ["admin", "sales_rep", "crm"] },
   { label: "HR", path: "/hr", icon: UserCircle, roles: ["admin", "hr"] },
   { label: "Reports", path: "/reports", icon: BarChart3, roles: ["admin", "manager", "finance"] },

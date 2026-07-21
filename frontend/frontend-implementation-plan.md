@@ -369,7 +369,7 @@ Frontend pages:
   components/bom-form-modal.tsx         → Create/edit BOM with raw materials
 ```
 
-### Phase 8: Quality Control (✅ Backend Complete, Frontend Pending)
+### Phase 8: Quality Control (✅ Complete)
 ```
 Backend: ✅ 5 new DB tables (quality_checklists, quality_checklist_items,
             quality_inspections, quality_inspection_results, quality_inspection_criteria)
@@ -382,7 +382,14 @@ Backend: ✅ 5 new DB tables (quality_checklists, quality_checklist_items,
          ✅ Permissions: quality:read, create, update, delete
          ✅ Registered at /api/quality
 
-Frontend: ❌ Not yet built
+Frontend: ✅ Layout with 4 tabs (Overview, Checklists, Inspections, Criteria)
+          ✅ Overview page with stats
+          ✅ Checklists: list + create/edit modal with dynamic items + detail page
+          ✅ Inspections: list (status + source filters) + create page + detail page with per-item result recording
+          ✅ Criteria: list + create/edit modal
+          ✅ quality.api.ts — 18 API functions + types + helpers
+          ✅ Sidebar nav item (ShieldCheck icon)
+          ✅ Routes + cache keys in constants.ts
 
 Endpoints:
   Checklists:
@@ -407,6 +414,18 @@ Tables:
 
 Status: pending → in_progress → [passed | failed | blocked]
 Result summary: pass | fail | conditional_pass
+
+Frontend pages:
+  /quality                           → Overview (stats)
+  /quality/checklists                → Checklist list
+  /quality/checklists/[id]           → Checklist detail (sorted items)
+  /quality/inspections               → Inspection list
+  /quality/inspections/new           → Create inspection
+  /quality/inspections/[id]          → Inspection detail (record results)
+  /quality/criteria                  → Criteria list
+  quality.api.ts                     → 18 API functions + types + helpers
+  components/checklist-form-modal.tsx → Create/edit checklist with dynamic items
+  components/criterion-form-modal.tsx → Create/edit criterion
 ```
 
 ### Phase 9+: Remaining modules
@@ -463,6 +482,7 @@ Backend modules pending (in order):
 | Manufacturing backend | ✅ Phase 7 backend completed: 7 DB tables, 20 API endpoints, BOM explosion (recursive CTE), stock integration |
 | Manufacturing frontend | ✅ Phase 7 frontend built: 8 pages, 2 modals, 18 API functions |
 | Quality Control backend | ✅ Phase 8 backend completed: 5 DB tables, 16 API endpoints, polymorphic inspections |
+| Quality Control frontend | ✅ Phase 8 frontend completed: 7 pages, 2 modals, 18 API functions |
 
 ## 5. Route Definitions (Next.js App Router)
 
@@ -503,6 +523,13 @@ Backend modules pending (in order):
 | `/manufacturing/bom` | BomListPage | ProtectedRoute (admin, production) |
 | `/manufacturing/bom/[id]` | BomDetailPage | ProtectedRoute (admin, production) |
 | `/manufacturing/work-centers` | WorkCenterListPage | ProtectedRoute (admin, production) |
+| `/quality` | QualityOverview | ProtectedRoute (admin, quality) |
+| `/quality/checklists` | ChecklistListPage | ProtectedRoute (admin, quality) |
+| `/quality/checklists/[id]` | ChecklistDetailPage | ProtectedRoute (admin, quality) |
+| `/quality/inspections` | InspectionListPage | ProtectedRoute (admin, quality) |
+| `/quality/inspections/new` | NewInspectionPage | ProtectedRoute (admin, quality) |
+| `/quality/inspections/[id]` | InspectionDetailPage | ProtectedRoute (admin, quality) |
+| `/quality/criteria` | CriteriaListPage | ProtectedRoute (admin, quality) |
 | `/settings` | SettingsPage | ProtectedRoute (admin) |
 | `/403` | ForbiddenPage | None |
 | `/404` | NotFoundPage | None |
@@ -541,7 +568,7 @@ CACHE_KEYS = {
   WORK_ORDERS:      ['manufacturing', 'work-orders'],
   WORK_ORDER:       (id) => ['manufacturing', 'work-orders', id],
 
-  // Quality Control (Phase 8 — pending frontend)
+  // Quality Control (Phase 8 — complete)
   QC_CHECKLISTS:    ['quality', 'checklists'],
   QC_CHECKLIST:     (id) => ['quality', 'checklists', id],
   QC_INSPECTIONS:   ['quality', 'inspections'],
@@ -584,7 +611,8 @@ start: Next.js scaffold
   ├── Vendor + Procurement backend    ← Phase 6 (complete)
   ├── Vendor + Procurement frontend   ← Phase 6 (complete)
   ├── Manufacturing pages + API       ← Phase 7 (complete)
-  └── Quality Control backend         ← Phase 8 (backend complete, frontend pending)
+  ├── Quality Control backend         ← Phase 8 (complete)
+  └── Quality Control frontend        ← Phase 8 (complete)
 ```
 
 ## 8. File Count (Current)
@@ -610,10 +638,11 @@ start: Next.js scaffold
 | modules/vendor (vendor.api.ts + vendor-form-modal) | 2 |
 | modules/procurement (purchase-order.api.ts) | 1 |
 | modules/manufacturing (manufacturing.api.ts + 2 components) | 3 |
+| modules/quality (quality.api.ts + 2 components) | 3 |
 | public (favicon, logo) | 2 |
 | env (.dev, .prod) | 2 |
 | middleware.ts | 1 |
-| **Total** | **~89 files** |
+| **Total** | **~95 files** |
 
 ---
 
