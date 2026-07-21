@@ -1,9 +1,10 @@
+const crypto = require('crypto');
+
 const required = [
   'JWT_SECRET',
   'JWT_ACCESS_EXPIRY',
   'JWT_REFRESH_EXPIRY',
   'SESSION_SECRET',
-  'ENCRYPTION_KEY',
 ];
 
 // DB: Render/Railway provides DATABASE_URL, otherwise require individual vars
@@ -29,9 +30,9 @@ if (process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
-if (process.env.ENCRYPTION_KEY.length !== 64) {
-  console.error('❌ ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
-  process.exit(1);
+if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
+  process.env.ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️ ENCRYPTION_KEY auto-generated. Set it in Render Dashboard for persistence across restarts.');
 }
 
 module.exports = {
