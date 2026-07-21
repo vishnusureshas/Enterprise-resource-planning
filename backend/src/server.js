@@ -29,9 +29,6 @@ const orderRoutes = require('./modules/order/order.routes');
 const vendorRoutes = require('./modules/vendor/vendor.routes');
 const purchaseOrderRoutes = require('./modules/procurement/purchase-order.routes');
 
-// Connect Redis on startup (lazyConnect is used in config)
-redis.connect().catch((err) => logger.error({ err }, 'Redis connection failed'));
-
 const app = express();
 
 // Trust proxy for rate limiting behind reverse proxy
@@ -90,28 +87,6 @@ app.use(compression());
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session
-const sessionStore = redis.status === 'ready'
-  ? new RedisStoreSession({ client: redis, prefix: 'sess:' })
-  : new session.MemoryStore();
-
-app.use(session({
-  store: sessionStore,
-  secret: env.session.secret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: env.nodeEnv === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax',
-  },
-}));
-
-if (redis.status !== 'ready') {
-  logger.warn('Redis not available, using in-memory session store');
-}
 
 // Rate limiting
 app.use('/api/auth', limiters.auth);
@@ -183,27 +158,59 @@ app.use(notFoundHandler);
 // Global error handler
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(env.port, () => {
-  logger.info(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
+let server;
+
+async function init() {
+  let sessionStore = new session.MemoryStore();
+
+  try {
+    await redis.connect();
+    if (redis.status === 'ready') {
+      sessionStore = new RedisStoreSession({ client: redis, prefix: 'sess:' });
+      logger.info('Redis connected, using Redis session store');
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Redis not available, using in-memory session store');
+  }
+
+  app.use(session({
+    store: sessionStore,
+    secret: env.session.secret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: env.nodeEnv === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+    },
+  }));
+
+  // Start server
+  server = app.listen(env.port, () => {
+    logger.info(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
+  });
+}
+
+init().catch((err) => {
+  logger.error({ err }, 'Failed to initialize server');
+  process.exit(1);
 });
 
 // Graceful shutdown
 const shutdown = async (signal) => {
   logger.info(`${signal} received, shutting down gracefully`);
-  server.close(async () => {
+  server?.close(async () => {
     logger.info('HTTP server closed');
     try {
       await redis.quit();
       logger.info('Redis connection closed');
-      process.exit(0);
     } catch (err) {
       logger.error('Error during shutdown', { error: err.message });
-      process.exit(1);
     }
+    process.exit(0);
   });
 
-  // Force close after 10 seconds
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
