@@ -29,7 +29,8 @@ services:
           name: erp-db
           property: connectionString
       - key: CORS_ORIGINS
-        value: "" # Comma-separated frontend URLs (e.g. https://erp-frontend.onrender.com,https://your-custom-domain.com)
+        # Comma-separated frontend URLs. Add your Vercel domain here.
+        value: "https://enterprise-resource-planning-sigma.vercel.app"
       - key: REDIS_URL
         # RECOMMENDED: Set for production. Without Redis, the app uses in-memory fallbacks (sessions,
         # rate limiting, refresh tokens) which reset on restart. Use Redis Cloud free tier or Upstash.
