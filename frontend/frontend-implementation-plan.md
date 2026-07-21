@@ -320,21 +320,18 @@ Permissions (already seeded):
   procurement:approve, procurement:receive
 ```
 
-### Phase 7: Manufacturing (✅ Backend Complete, Frontend Pending)
+### Phase 7: Manufacturing (✅ Complete)
 ```
-Backend: ✅ 7 new DB tables (bom, bom_items, work_centers, work_orders,
-            work_order_operations, work_order_consumptions, work_order_outputs)
-         ✅ 20 API endpoints
-         ✅ BOM CRUD + recursive multi-level explosion (CTE)
-         ✅ Work Centers CRUD
-         ✅ Work Orders CRUD + status lifecycle (draft→planned→in_progress→completed)
-         ✅ Production actions: start, complete, record consumption (deduct stock), record output (add stock)
-         ✅ Auto-generated work order numbers (WO-2026-00001)
-         ✅ Stock integration: consumption deducts from warehouse_stock, output adds to warehouse_stock
-         ✅ Permissions: manufacturing:read, create, update, delete, produce
-         ✅ Registered at /api/manufacturing
+Backend: ✅ 7 DB tables, 20 API endpoints, BOM recursive explosion, stock integration
+          ✅ Permissions: manufacturing:read, create, update, delete, produce
+          ✅ Registered at /api/manufacturing
 
-Frontend: ❌ Not yet built
+Frontend: ✅ Layout with 4 tabs (Overview, Work Orders, BOM, Work Centers)
+          ✅ Overview page with stats + recent work orders
+          ✅ Work Centers: list + create/edit modal
+          ✅ BOM: list + create/edit modal with raw materials + detail page with recursive explosion toggle
+          ✅ Work Orders: list (status filter) + create page (product/BOM/WC selectors) + detail page
+          ✅ Detail page: status transitions (start/complete), record consumption/output forms
 
 Endpoints:
   Work Centers:
@@ -354,19 +351,65 @@ Endpoints:
     POST          /api/manufacturing/work-orders/:id/output
 
 Tables:
-  work_centers         (org-scoped, code-unique)
-  bom                  (org-scoped, linked to products via product_id)
-  bom_items            (nested under bom, each item linked to a raw material product)
-  work_orders          (org-scoped, auto-numbered, linked to products/bom/work_centers)
-  work_order_operations (steps within a work order)
-  work_order_consumptions (raw materials consumed, links to warehouse_stock)
-  work_order_outputs    (finished goods produced, links to warehouse_stock)
+  work_centers, bom, bom_items, work_orders,
+  work_order_operations, work_order_consumptions, work_order_outputs
 
-Status transitions: draft → planned → in_progress → completed
-                    any → cancelled
+Status transitions: draft → planned → in_progress → completed | any → cancelled
+
+Frontend pages:
+  /manufacturing                         → Overview (stats + recent WOs)
+  /manufacturing/work-orders             → Work order list
+  /manufacturing/work-orders/new         → Create work order
+  /manufacturing/work-orders/[id]        → Work order detail
+  /manufacturing/bom                     → BOM list
+  /manufacturing/bom/[id]               → BOM detail (raw materials + explosion)
+  /manufacturing/work-centers            → Work centers list
+  manufacturing.api.ts                   → 18 API functions + helpers
+  components/work-center-form-modal.tsx  → Create/edit work center
+  components/bom-form-modal.tsx         → Create/edit BOM with raw materials
 ```
 
-### Phase 8+: Remaining modules
+### Phase 8: Quality Control (✅ Backend Complete, Frontend Pending)
+```
+Backend: ✅ 5 new DB tables (quality_checklists, quality_checklist_items,
+            quality_inspections, quality_inspection_results, quality_inspection_criteria)
+         ✅ 16 API endpoints
+         ✅ Checklists CRUD with nested checklist items
+         ✅ Auto-numbered inspections (IQC-2026-00001)
+         ✅ Inspections linkable to purchase_order_item, work_order_output, sales_order_item
+         ✅ Record results against checklist items (pass/fail/blocked)
+         ✅ Inspection report by reference type + ID
+         ✅ Permissions: quality:read, create, update, delete
+         ✅ Registered at /api/quality
+
+Frontend: ❌ Not yet built
+
+Endpoints:
+  Checklists:
+    GET/POST        /api/quality/checklists
+    GET/PATCH/DELETE /api/quality/checklists/:id
+  Inspections:
+    GET/POST        /api/quality/inspections
+    GET/DELETE      /api/quality/inspections/:id
+    POST            /api/quality/inspections/:id/results
+  Criteria:
+    GET/POST        /api/quality/criteria
+    GET/PATCH/DELETE /api/quality/criteria/:id
+  Reports:
+    GET             /api/quality/reports/:referenceType/:referenceId
+
+Tables:
+  quality_checklists           (org-scoped, checklist templates)
+  quality_checklist_items      (nested checks within a checklist)
+  quality_inspections          (individual inspections, polymorphic: references PO/WO/SO items)
+  quality_inspection_results   (individual check results per inspection)
+  quality_inspection_criteria  (reusable criteria templates per product)
+
+Status: pending → in_progress → [passed | failed | blocked]
+Result summary: pass | fail | conditional_pass
+```
+
+### Phase 9+: Remaining modules
 ```
 Each module follows the same pattern:
   ListPage → DataTable + Search + Pagination
@@ -375,7 +418,6 @@ Each module follows the same pattern:
   Delete → ConfirmDialog → DELETE
 
 Backend modules pending (in order):
-  Quality Control               → Phase 8
   Shipping & Logistics          → Phase 9
   RMA / Returns                 → Phase 10
   Finance & Accounting          → Phase 11
@@ -419,6 +461,8 @@ Backend modules pending (in order):
 | Module order deviation | Customers (pending) + Orders (pending) were swapped to build as Phase 5 backend together since Customers is a dependency of Orders |
 | Vendor + Procurement frontend | Phase 6 frontend built ahead of original plan (was marked pending) |
 | Manufacturing backend | ✅ Phase 7 backend completed: 7 DB tables, 20 API endpoints, BOM explosion (recursive CTE), stock integration |
+| Manufacturing frontend | ✅ Phase 7 frontend built: 8 pages, 2 modals, 18 API functions |
+| Quality Control backend | ✅ Phase 8 backend completed: 5 DB tables, 16 API endpoints, polymorphic inspections |
 
 ## 5. Route Definitions (Next.js App Router)
 
@@ -452,6 +496,13 @@ Backend modules pending (in order):
 | `/procurement` | PurchaseOrderListPage | ProtectedRoute (admin, procurement, manager) |
 | `/procurement/new` | NewPurchaseOrderPage | ProtectedRoute (admin, procurement, manager) |
 | `/procurement/[id]` | PurchaseOrderDetailPage | ProtectedRoute (admin, procurement, manager) |
+| `/manufacturing` | ManufacturingOverview | ProtectedRoute (admin, production) |
+| `/manufacturing/work-orders` | WorkOrderListPage | ProtectedRoute (admin, production) |
+| `/manufacturing/work-orders/new` | NewWorkOrderPage | ProtectedRoute (admin, production) |
+| `/manufacturing/work-orders/[id]` | WorkOrderDetailPage | ProtectedRoute (admin, production) |
+| `/manufacturing/bom` | BomListPage | ProtectedRoute (admin, production) |
+| `/manufacturing/bom/[id]` | BomDetailPage | ProtectedRoute (admin, production) |
+| `/manufacturing/work-centers` | WorkCenterListPage | ProtectedRoute (admin, production) |
 | `/settings` | SettingsPage | ProtectedRoute (admin) |
 | `/403` | ForbiddenPage | None |
 | `/404` | NotFoundPage | None |
@@ -482,13 +533,22 @@ CACHE_KEYS = {
   PURCHASE_ORDERS:  ['purchase-orders'],
   PURCHASE_ORDER:   (id) => ['purchase-orders', id],
 
-  // Manufacturing (Phase 7 — pending frontend)
+  // Manufacturing (Phase 7)
   BOMS:             ['manufacturing', 'bom'],
   BOM:              (id) => ['manufacturing', 'bom', id],
   WORK_CENTERS:     ['manufacturing', 'work-centers'],
   WORK_CENTER:      (id) => ['manufacturing', 'work-centers', id],
   WORK_ORDERS:      ['manufacturing', 'work-orders'],
   WORK_ORDER:       (id) => ['manufacturing', 'work-orders', id],
+
+  // Quality Control (Phase 8 — pending frontend)
+  QC_CHECKLISTS:    ['quality', 'checklists'],
+  QC_CHECKLIST:     (id) => ['quality', 'checklists', id],
+  QC_INSPECTIONS:   ['quality', 'inspections'],
+  QC_INSPECTION:    (id) => ['quality', 'inspections', id],
+  QC_CRITERIA:      ['quality', 'criteria'],
+  QC_CRITERION:     (id) => ['quality', 'criteria', id],
+  QC_REPORT:        (type, refId) => ['quality', 'reports', type, refId],
 }
 ```
 
@@ -523,7 +583,8 @@ start: Next.js scaffold
   ├── Customer + Order frontend       ← Phase 5 (complete)
   ├── Vendor + Procurement backend    ← Phase 6 (complete)
   ├── Vendor + Procurement frontend   ← Phase 6 (complete)
-  └── Manufacturing backend           ← Phase 7 (backend complete, frontend pending)
+  ├── Manufacturing pages + API       ← Phase 7 (complete)
+  └── Quality Control backend         ← Phase 8 (backend complete, frontend pending)
 ```
 
 ## 8. File Count (Current)
@@ -548,10 +609,11 @@ start: Next.js scaffold
 | modules/order (order.api.ts) | 1 |
 | modules/vendor (vendor.api.ts + vendor-form-modal) | 2 |
 | modules/procurement (purchase-order.api.ts) | 1 |
+| modules/manufacturing (manufacturing.api.ts + 2 components) | 3 |
 | public (favicon, logo) | 2 |
 | env (.dev, .prod) | 2 |
 | middleware.ts | 1 |
-| **Total** | **~86 files** |
+| **Total** | **~89 files** |
 
 ---
 
@@ -562,4 +624,4 @@ start: Next.js scaffold
 | `/orders` page crashes on load | `frontend/src/app/(dashboard)/orders/page.tsx` | Internal Server Error (500) at runtime | Likely Next.js SSR crash — component tries to access browser-only API (`localStorage`, `window`) or a module fails to load during server render |
 | Auth refresh endpoint crashes | `backend/src/modules/auth/auth.controller.js:35` | `Cannot read properties of undefined (reading 'id')` on `POST /api/auth/refresh` | The refresh handler expects `req.user.id` but `req.user` is `undefined` when the refresh token middleware doesn't populate it |
 
-*This plan aligns with backend phases 1–7 at `d:\ERP\backend\erp-workflow-plan.md` and maps directly to the API endpoints, data models, and auth flows already built.*
+*This plan aligns with backend phases 1–8 at `d:\ERP\backend\erp-workflow-plan.md` and maps directly to the API endpoints, data models, and auth flows already built.*
