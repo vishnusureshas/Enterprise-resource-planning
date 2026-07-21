@@ -152,7 +152,7 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit BOM" : "Add Bill of Materials"}</DialogTitle>
         </DialogHeader>
