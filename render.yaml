@@ -29,6 +29,20 @@ services:
       - key: CORS_ORIGINS
         value: "" # Comma-separated frontend URLs (e.g. https://erp-frontend.onrender.com,https://your-custom-domain.com)
 
+  - type: web
+    name: erp-frontend
+    env: node
+    sourceDir: frontend
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://erp-backend-4r3w.onrender.com/api
+
 databases:
   - name: erp-db
     databaseName: erp
