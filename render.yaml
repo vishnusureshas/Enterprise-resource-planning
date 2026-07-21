@@ -5,7 +5,6 @@ services:
     dockerfilePath: backend/Dockerfile
     plan: starter
     healthCheckPath: /api/health
-    startCommand: sh -c "npm run migrate:up && node src/server.js"
     envVars:
       - key: NODE_ENV
         value: production
