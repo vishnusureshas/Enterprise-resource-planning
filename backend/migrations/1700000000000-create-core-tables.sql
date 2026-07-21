@@ -6,7 +6,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Organizations (multi-tenancy root)
-CREATE TABLE organizations (
+CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(100) UNIQUE NOT NULL,
@@ -21,7 +21,7 @@ CREATE INDEX idx_organizations_slug ON organizations(slug);
 CREATE INDEX idx_organizations_status ON organizations(status) WHERE deleted_at IS NULL;
 
 -- Roles
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE roles (
 CREATE INDEX idx_roles_organization ON roles(organization_id);
 
 -- Permissions
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
@@ -44,14 +44,14 @@ CREATE TABLE permissions (
 );
 
 -- Role-Permissions junction
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
 
 -- Users
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     email VARCHAR(255) NOT NULL,
@@ -77,7 +77,7 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_status ON users(status) WHERE deleted_at IS NULL;
 
 -- User-Roles junction
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     assigned_by UUID REFERENCES users(id),
@@ -89,7 +89,7 @@ CREATE INDEX idx_user_roles_user ON user_roles(user_id);
 CREATE INDEX idx_user_roles_role ON user_roles(role_id);
 
 -- User Sessions (for refresh token tracking)
-CREATE TABLE user_sessions (
+CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_id UUID NOT NULL,
@@ -105,7 +105,7 @@ CREATE INDEX idx_user_sessions_session ON user_sessions(session_id);
 CREATE INDEX idx_user_sessions_expires ON user_sessions(expires_at) WHERE revoked = FALSE;
 
 -- Audit Logs
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -218,6 +218,7 @@ INSERT INTO permissions (name, description, category) VALUES
 -- Admin
 ('admin:read', 'View admin panel', 'admin'),
 ('admin:user:manage', 'Manage users (super admin)', 'admin'),
-('admin:org:manage', 'Manage organizations (super admin)', 'admin');
+('admin:org:manage', 'Manage organizations (super admin)', 'admin')
+ON CONFLICT (name) DO NOTHING;
 
 -- System default roles (will be created per organization via seed)
