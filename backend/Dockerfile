@@ -4,11 +4,11 @@ WORKDIR /app
 
 RUN apk add --no-cache curl
 
-COPY package*.json ./
+COPY backend/package*.json ./
 
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --production && npm cache clean --force
 
-COPY . .
+COPY backend/ .
 
 RUN printf '#!/bin/sh\nset -e\n\necho "Running database migrations..."\nnpm run migrate:up\n\necho "Starting server..."\nexec node src/server.js\n' > /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 
