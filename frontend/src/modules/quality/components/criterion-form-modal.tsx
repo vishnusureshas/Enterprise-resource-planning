@@ -102,24 +102,24 @@ export function CriterionFormModal({ open, onOpenChange, criterionId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Criterion" : "Add Inspection Criterion"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Criterion" : "Add Criterion"}</DialogTitle>
         </DialogHeader>
 
         {isEdit && loadingCriterion ? (
           <LoadingSpinner />
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Name *</Label>
-              <Input placeholder="Weight tolerance" className="h-9 text-sm" {...register("name")} />
+              <Input placeholder="Weight tolerance" className="h-8 text-sm" {...register("name")} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Product</Label>
+              <Label className="text-xs font-medium">Product (optional)</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                 value={watch("productId") || ""}
                 onChange={(e) => setValue("productId", e.target.value || null)}
               >
@@ -132,39 +132,39 @@ export function CriterionFormModal({ open, onOpenChange, criterionId }: Props) {
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Description</Label>
               <textarea
-                className="flex min-h-[52px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                className="flex min-h-[44px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 {...register("description")}
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Min</Label>
-                <Input type="number" step="any" className="h-9 text-sm" {...register("minValue")} />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] font-medium">Min</Label>
+                <Input type="number" step="any" className="h-7 text-xs" {...register("minValue")} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Max</Label>
-                <Input type="number" step="any" className="h-9 text-sm" {...register("maxValue")} />
+              <div className="space-y-1">
+                <Label className="text-[10px] font-medium">Max</Label>
+                <Input type="number" step="any" className="h-7 text-xs" {...register("maxValue")} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Unit</Label>
-                <Input placeholder="g, mm" className="h-9 text-sm" {...register("unit")} />
+              <div className="space-y-1">
+                <Label className="text-[10px] font-medium">Unit</Label>
+                <Input placeholder="g, mm" className="h-7 text-xs" {...register("unit")} />
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
                 <Switch id="isCritical" checked={watch("isCritical")} onCheckedChange={(c) => setValue("isCritical", c)} />
                 <Label htmlFor="isCritical" className="text-xs font-medium">Critical</Label>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Switch id="isActive" checked={watch("isActive")} onCheckedChange={(c) => setValue("isActive", c)} />
                 <Label htmlFor="isActive" className="text-xs font-medium">Active</Label>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" size="sm" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
-                {isEdit ? "Update" : "Create"} Criterion
+              <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" size="sm" className="h-8 text-xs" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
+                {isEdit ? "Update" : "Create"}
               </Button>
             </div>
           </form>

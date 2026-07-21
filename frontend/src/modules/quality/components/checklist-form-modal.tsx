@@ -60,6 +60,10 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
     defaultValues: { name: "", description: "", isActive: true, items: [] },
   });
 
+  const [items, setItems] = useState<FormValues["items"]>([]);
+
+  useEffect(() => { if (!isEdit) setItems([]); }, [open, isEdit]);
+
   useEffect(() => {
     if (checklist) {
       reset({
@@ -88,12 +92,7 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
     }
   }, [checklist, reset]);
 
-  const [items, setItems] = useState<FormValues["items"]>([]);
-
-  useEffect(() => { if (!isEdit) setItems([]); }, [open, isEdit]);
-
   const addItem = () => {
-    console.log("addItem clicked, current items:", items.length);
     setItems((prev) => [...prev, { description: "", expectedValue: null, minValue: null, maxValue: null, unit: null, isCritical: false, inspectionMethod: null }]);
   };
 
@@ -135,7 +134,7 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Checklist" : "Add QC Checklist"}</DialogTitle>
         </DialogHeader>
@@ -143,18 +142,18 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
         {isEdit && loadingChecklist ? (
           <LoadingSpinner />
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div className="space-y-3">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Details</h4>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Name *</Label>
-                <Input placeholder="Widget Inspection" className="h-9 text-sm" {...register("name")} />
+                <Input placeholder="Widget Inspection" className="h-8 text-sm" {...register("name")} />
                 {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Description</Label>
                 <textarea
-                  className="flex min-h-[52px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                  className="flex min-h-[44px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                   {...register("description")}
                 />
               </div>
@@ -164,70 +163,70 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist Items</h4>
-                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={addItem}>
-                  <Plus className="mr-1 h-3 w-3" /> Add Check
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Items</h4>
+                <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={addItem}>
+                  <Plus className="mr-0.5 h-2.5 w-2.5" /> Add Check
                 </Button>
               </div>
 
               {items.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-3">Click "Add Check" to create inspection items</p>
+                <p className="text-xs text-muted-foreground text-center py-2">Click "Add Check" to create inspection items</p>
               ) : (
-                <div className="space-y-2 max-h-[240px] overflow-y-auto">
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
                   {items.map((item, idx) => (
-                    <div key={idx} className="rounded-md border p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 space-y-1.5">
-                          <Label className="text-xs font-medium">Description *</Label>
+                    <div key={idx} className="rounded border p-2 space-y-1.5">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="flex-1 min-w-0">
+                          <Label className="text-[10px] font-medium">Description *</Label>
                           <Input
-                            className="h-8 text-sm"
+                            className="h-7 text-xs mt-0.5"
                             value={item.description}
                             onChange={(e) => updateItem(idx, "description", e.target.value)}
-                            placeholder="e.g. Weight within tolerance"
+                            placeholder="e.g. Weight tolerance"
                           />
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 mt-5 shrink-0" onClick={() => removeItem(idx)} type="button">
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6 mt-4 shrink-0" onClick={() => removeItem(idx)} type="button">
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
                       </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        <div className="space-y-1">
+                      <div className="grid grid-cols-4 gap-1.5">
+                        <div>
                           <Label className="text-[10px] font-medium">Expected</Label>
-                          <Input className="h-7 text-xs" value={item.expectedValue ?? ""}
+                          <Input className="h-6 text-[10px] mt-0.5" value={item.expectedValue ?? ""}
                             onChange={(e) => updateItem(idx, "expectedValue", e.target.value || null)}
-                            placeholder="Blue RAL 5015" />
+                            placeholder="Value" />
                         </div>
-                        <div className="space-y-1">
+                        <div>
                           <Label className="text-[10px] font-medium">Min</Label>
-                          <Input type="number" className="h-7 text-xs" value={item.minValue ?? ""}
+                          <Input type="number" step="any" className="h-6 text-[10px] mt-0.5" value={item.minValue ?? ""}
                             onChange={(e) => updateItem(idx, "minValue", e.target.value ? parseFloat(e.target.value) : null)} />
                         </div>
-                        <div className="space-y-1">
+                        <div>
                           <Label className="text-[10px] font-medium">Max</Label>
-                          <Input type="number" className="h-7 text-xs" value={item.maxValue ?? ""}
+                          <Input type="number" step="any" className="h-6 text-[10px] mt-0.5" value={item.maxValue ?? ""}
                             onChange={(e) => updateItem(idx, "maxValue", e.target.value ? parseFloat(e.target.value) : null)} />
                         </div>
-                        <div className="space-y-1">
+                        <div>
                           <Label className="text-[10px] font-medium">Unit</Label>
-                          <Input className="h-7 text-xs" value={item.unit ?? ""}
+                          <Input className="h-6 text-[10px] mt-0.5" value={item.unit ?? ""}
                             onChange={(e) => updateItem(idx, "unit", e.target.value || null)}
                             placeholder="g, mm" />
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
                           <input type="checkbox" id={`critical-${idx}`} checked={item.isCritical}
                             onChange={(e) => updateItem(idx, "isCritical", e.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-gray-300" />
+                            className="h-3 w-3 rounded border-gray-300" />
                           <Label htmlFor={`critical-${idx}`} className="text-[10px] font-medium">Critical</Label>
                         </div>
                         <div className="flex-1" />
-                        <div className="w-40">
-                          <Input className="h-7 text-xs" value={item.inspectionMethod ?? ""}
+                        <div className="w-32">
+                          <Input className="h-6 text-[10px]" value={item.inspectionMethod ?? ""}
                             onChange={(e) => updateItem(idx, "inspectionMethod", e.target.value || null)}
-                            placeholder="Method: Caliper" />
+                            placeholder="Method" />
                         </div>
                       </div>
                     </div>
@@ -237,9 +236,9 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" size="sm" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
-                {isEdit ? "Update" : "Create"} Checklist
+              <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" size="sm" className="h-8 text-xs" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
+                {isEdit ? "Update" : "Create"}
               </Button>
             </div>
           </form>
