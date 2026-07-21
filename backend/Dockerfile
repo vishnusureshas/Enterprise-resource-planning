@@ -10,7 +10,7 @@ RUN npm install --production && npm cache clean --force
 
 COPY backend/ .
 
-RUN printf '#!/bin/sh\nset -e\n\necho "Running database migrations..."\nnpm run migrate:up\n\necho "Starting server..."\nexec node src/server.js\n' > /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN printf '#!/bin/sh\nset -e\n\necho "Running database migrations..."\nnpm run migrate:up\n\necho "Running seed..."\nnpm run seed\n\necho "Starting server..."\nexec node src/server.js\n' > /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 5000
 
