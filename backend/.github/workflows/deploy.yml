@@ -1,15 +1,11 @@
-name: Deploy
+name: Deploy to Render
 
 on:
   push:
     branches: [main]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
-  test-and-build:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -74,107 +70,15 @@ jobs:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        run: |
-          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-  deploy-staging:
-    needs: [test-and-build]
+  deploy:
+    needs: [test]
     runs-on: ubuntu-latest
-    environment: staging
 
     steps:
-      - name: Deploy to staging
+      - name: Trigger Render deploy
         run: |
-          ssh deploy@${{ secrets.STAGING_HOST }} "
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} &&
-            docker stop erp-api-staging || true &&
-            docker rm erp-api-staging || true &&
-            docker run -d --name erp-api-staging \
-              -p 5001:5000 \
-              --env-file /opt/erp/.env.staging \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} &&
-            sleep 10 &&
-            docker exec erp-api-staging npm run migrate:up &&
-            curl -f http://localhost:5001/api/health
-          "
-
-      - name: Smoke test
-        run: |
-          curl -f https://staging.erp.mycompany.com/api/health
-
-  deploy-production:
-    needs: [deploy-staging]
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://api.erp.mycompany.com
-
-    steps:
-      - name: Notify deployment start
-        run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
-            -H 'Content-Type: application/json' \
-            -d '{"text": "Deploying ERP API v${{ github.sha }} to production..."}'
-
-      - name: Rolling update node 1
-        run: |
-          ssh deploy@${{ secrets.PROD_HOST_1 }} "
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} &&
-            docker stop erp-api-1 || true &&
-            docker rm erp-api-1 || true &&
-            docker run -d --name erp-api-1 \
-              -p 5000:5000 \
-              --env-file /opt/erp/.env.production \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} &&
-            sleep 5 &&
-            curl -f http://localhost:5000/api/health
-          "
-
-      - name: Run pending migrations
-        run: |
-          ssh deploy@${{ secrets.PROD_HOST_1 }} "
-            docker exec erp-api-1 npm run migrate:up
-          "
-
-      - name: Update remaining nodes
-        run: |
-          for host in "${{ secrets.PROD_HOST_2 }}" "${{ secrets.PROD_HOST_3 }}"; do
-            ssh deploy@$host "
-              docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} &&
-              docker stop erp-api || true &&
-              docker rm erp-api || true &&
-              docker run -d --name erp-api \
-                -p 5000:5000 \
-                --env-file /opt/erp/.env.production \
-                ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            "
-          done
-
-      - name: Warm cache
-        run: |
-          curl -X POST https://api.erp.mycompany.com/api/admin/cache/warm \
-            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}"
-
-      - name: Notify success
-        if: success()
-        run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
-            -H 'Content-Type: application/json' \
-            -d '{"text": "ERP API v${{ github.sha }} deployed successfully to production"}'
-
-      - name: Notify failure
-        if: failure()
-        run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
-            -H 'Content-Type: application/json' \
-            -d '{"text": "ERP API v${{ github.sha }} deployment FAILED"}'
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            --fail \
+            -d '{}'

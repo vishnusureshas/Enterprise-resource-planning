@@ -68,7 +68,7 @@ app.use(helmet({
 
 // CORS
 const allowedOrigins = env.nodeEnv === 'production'
-  ? (process.env.CORS_ORIGINS || 'https://*.up.railway.app').split(',')
+  ? (process.env.CORS_ORIGINS || 'https://*.onrender.com').split(',')
   : ['http://localhost:3000', 'http://localhost:5173'];
 
 app.use(cors({

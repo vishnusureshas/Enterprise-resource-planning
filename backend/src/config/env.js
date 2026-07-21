@@ -6,12 +6,12 @@ const required = [
   'ENCRYPTION_KEY',
 ];
 
-// DB: Railway provides DATABASE_URL, otherwise require individual vars
+// DB: Render/Railway provides DATABASE_URL, otherwise require individual vars
 if (!process.env.DATABASE_URL) {
   required.push('DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD');
 }
 
-// Redis: Railway provides REDIS_URL, otherwise require individual vars
+// Redis: Render/Railway provides REDIS_URL, otherwise require individual vars
 if (!process.env.REDIS_URL) {
   required.push('REDIS_HOST', 'REDIS_PORT');
 }
