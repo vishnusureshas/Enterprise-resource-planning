@@ -36,7 +36,7 @@ const schema = z.object({
   quantity: z.coerce.number().positive().default(1),
   isActive: z.boolean().default(true),
   notes: z.string().max(1000).optional().nullable(),
-  items: z.array(itemSchema).min(1, "At least one item required"),
+  items: z.array(itemSchema),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -145,6 +145,10 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
   });
 
   const onSubmit = (data: FormValues) => {
+    if (items.length === 0) {
+      toast({ title: "Please add at least one raw material", variant: "destructive" });
+      return;
+    }
     const payload = { ...data, items };
     if (isEdit) updateMutation.mutate(payload);
     else createMutation.mutate(payload);
@@ -263,7 +267,6 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
                   })}
                 </div>
               )}
-              {errors.items && <p className="text-xs text-destructive">{errors.items.message}</p>}
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
