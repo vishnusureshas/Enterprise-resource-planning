@@ -4,7 +4,7 @@
 
 -- ─── Vendors ─────────────────────────────────────────────────────
 
-CREATE TABLE vendors (
+CREATE TABLE IF NOT EXISTS vendors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     code VARCHAR(50) NOT NULL,
@@ -30,7 +30,7 @@ CREATE INDEX idx_vendors_email ON vendors(organization_id, email);
 CREATE INDEX idx_vendors_status ON vendors(organization_id, status) WHERE deleted_at IS NULL;
 CREATE INDEX idx_vendors_search ON vendors USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
 
-CREATE TABLE vendor_contacts (
+CREATE TABLE IF NOT EXISTS vendor_contacts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     first_name VARCHAR(255),
@@ -45,7 +45,7 @@ CREATE TABLE vendor_contacts (
 
 CREATE INDEX idx_vendor_contacts_vendor ON vendor_contacts(vendor_id);
 
-CREATE TABLE vendor_contracts (
+CREATE TABLE IF NOT EXISTS vendor_contracts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
@@ -65,7 +65,7 @@ CREATE INDEX idx_vendor_contracts_vendor ON vendor_contracts(vendor_id);
 
 -- ─── Purchase Orders ─────────────────────────────────────────────
 
-CREATE TABLE purchase_orders (
+CREATE TABLE IF NOT EXISTS purchase_orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     po_number VARCHAR(50) NOT NULL,
@@ -97,7 +97,7 @@ CREATE INDEX idx_purchase_orders_vendor ON purchase_orders(vendor_id);
 CREATE INDEX idx_purchase_orders_status ON purchase_orders(organization_id, status) WHERE deleted_at IS NULL;
 CREATE INDEX idx_purchase_orders_date ON purchase_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
 
-CREATE TABLE purchase_order_items (
+CREATE TABLE IF NOT EXISTS purchase_order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     purchase_order_id UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
@@ -118,7 +118,7 @@ CREATE TABLE purchase_order_items (
 CREATE INDEX idx_purchase_order_items_order ON purchase_order_items(purchase_order_id);
 CREATE INDEX idx_purchase_order_items_product ON purchase_order_items(product_id);
 
-CREATE TABLE purchase_order_taxes (
+CREATE TABLE IF NOT EXISTS purchase_order_taxes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     purchase_order_id UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
     name VARCHAR(100),
@@ -129,7 +129,7 @@ CREATE TABLE purchase_order_taxes (
 
 CREATE INDEX idx_purchase_order_taxes_order ON purchase_order_taxes(purchase_order_id);
 
-CREATE TABLE goods_receipts (
+CREATE TABLE IF NOT EXISTS goods_receipts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     purchase_order_id UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
@@ -144,7 +144,7 @@ CREATE TABLE goods_receipts (
 
 CREATE INDEX idx_goods_receipts_order ON goods_receipts(purchase_order_id);
 
-CREATE TABLE goods_receipt_items (
+CREATE TABLE IF NOT EXISTS goods_receipt_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     goods_receipt_id UUID NOT NULL REFERENCES goods_receipts(id) ON DELETE CASCADE,
     purchase_order_item_id UUID NOT NULL REFERENCES purchase_order_items(id) ON DELETE RESTRICT,

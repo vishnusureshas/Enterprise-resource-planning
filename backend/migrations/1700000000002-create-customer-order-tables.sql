@@ -4,7 +4,7 @@
 
 -- ─── Customers ─────────────────────────────────────────────────────
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     code VARCHAR(50) NOT NULL,
@@ -28,7 +28,7 @@ CREATE INDEX idx_customers_email ON customers(organization_id, email);
 CREATE INDEX idx_customers_status ON customers(organization_id, status) WHERE deleted_at IS NULL;
 CREATE INDEX idx_customers_search ON customers USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
 
-CREATE TABLE customer_addresses (
+CREATE TABLE IF NOT EXISTS customer_addresses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
     type VARCHAR(50) DEFAULT 'shipping',
@@ -45,7 +45,7 @@ CREATE TABLE customer_addresses (
 
 CREATE INDEX idx_customer_addresses_customer ON customer_addresses(customer_id);
 
-CREATE TABLE customer_contacts (
+CREATE TABLE IF NOT EXISTS customer_contacts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
     first_name VARCHAR(255),
@@ -60,7 +60,7 @@ CREATE TABLE customer_contacts (
 
 CREATE INDEX idx_customer_contacts_customer ON customer_contacts(customer_id);
 
-CREATE TABLE customer_notes (
+CREATE TABLE IF NOT EXISTS customer_notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
@@ -72,7 +72,7 @@ CREATE INDEX idx_customer_notes_customer ON customer_notes(customer_id);
 
 -- ─── Sales Orders ──────────────────────────────────────────────────
 
-CREATE TABLE sales_orders (
+CREATE TABLE IF NOT EXISTS sales_orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     order_number VARCHAR(50) NOT NULL,
@@ -103,7 +103,7 @@ CREATE INDEX idx_sales_orders_customer ON sales_orders(customer_id);
 CREATE INDEX idx_sales_orders_status ON sales_orders(organization_id, status) WHERE deleted_at IS NULL;
 CREATE INDEX idx_sales_orders_date ON sales_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
 
-CREATE TABLE sales_order_items (
+CREATE TABLE IF NOT EXISTS sales_order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     sales_order_id UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
@@ -123,7 +123,7 @@ CREATE TABLE sales_order_items (
 CREATE INDEX idx_sales_order_items_order ON sales_order_items(sales_order_id);
 CREATE INDEX idx_sales_order_items_product ON sales_order_items(product_id);
 
-CREATE TABLE sales_order_payments (
+CREATE TABLE IF NOT EXISTS sales_order_payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     sales_order_id UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
     amount NUMERIC(15,2) NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE sales_order_payments (
 
 CREATE INDEX idx_sales_order_payments_order ON sales_order_payments(sales_order_id);
 
-CREATE TABLE sales_order_taxes (
+CREATE TABLE IF NOT EXISTS sales_order_taxes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     sales_order_id UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
     name VARCHAR(100),

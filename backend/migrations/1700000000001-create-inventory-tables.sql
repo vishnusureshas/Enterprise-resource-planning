@@ -3,7 +3,7 @@
 -- Description: Creates inventory categories, products, variants, warehouses, stock, and movements tables
 
 -- Inventory Categories
-CREATE TABLE inventory_categories (
+CREATE TABLE IF NOT EXISTS inventory_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES inventory_categories(id) ON DELETE SET NULL,
@@ -23,7 +23,7 @@ CREATE INDEX idx_inv_categories_parent ON inventory_categories(parent_id);
 CREATE INDEX idx_inv_categories_active ON inventory_categories(organization_id, is_active) WHERE deleted_at IS NULL;
 
 -- Products (Inventory Items)
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     category_id UUID REFERENCES inventory_categories(id) ON DELETE SET NULL,
@@ -56,7 +56,7 @@ CREATE INDEX idx_products_active ON products(organization_id, is_active) WHERE d
 CREATE INDEX idx_products_search ON products USING GIN(to_tsvector('simple', name || ' ' || COALESCE(description, '')));
 
 -- Product Variants
-CREATE TABLE product_variants (
+CREATE TABLE IF NOT EXISTS product_variants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     sku VARCHAR(100) NOT NULL,
@@ -75,7 +75,7 @@ CREATE INDEX idx_product_variants_product ON product_variants(product_id);
 CREATE INDEX idx_product_variants_sku ON product_variants(sku);
 
 -- Product Barcodes
-CREATE TABLE product_barcodes (
+CREATE TABLE IF NOT EXISTS product_barcodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID REFERENCES products(id) ON DELETE CASCADE,
     variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE,
@@ -94,7 +94,7 @@ CREATE INDEX idx_product_barcodes_product ON product_barcodes(product_id);
 CREATE INDEX idx_product_barcodes_variant ON product_barcodes(variant_id);
 
 -- Product-Supplier junction
-CREATE TABLE product_suppliers (
+CREATE TABLE IF NOT EXISTS product_suppliers (
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     supplier_id UUID NOT NULL,
     supplier_sku VARCHAR(100),
@@ -106,7 +106,7 @@ CREATE TABLE product_suppliers (
 );
 
 -- Warehouses
-CREATE TABLE warehouses (
+CREATE TABLE IF NOT EXISTS warehouses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     code VARCHAR(50) NOT NULL,
@@ -130,7 +130,7 @@ CREATE INDEX idx_warehouses_org ON warehouses(organization_id);
 CREATE INDEX idx_warehouses_active ON warehouses(organization_id, is_active) WHERE deleted_at IS NULL;
 
 -- Warehouse Bin Locations
-CREATE TABLE warehouse_bin_locations (
+CREATE TABLE IF NOT EXISTS warehouse_bin_locations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
     code VARCHAR(50) NOT NULL,
@@ -150,7 +150,7 @@ CREATE INDEX idx_bin_locations_warehouse ON warehouse_bin_locations(warehouse_id
 CREATE INDEX idx_bin_locations_zone ON warehouse_bin_locations(warehouse_id, zone);
 
 -- Warehouse Stock (product inventory per warehouse)
-CREATE TABLE warehouse_stock (
+CREATE TABLE IF NOT EXISTS warehouse_stock (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -174,7 +174,7 @@ CREATE UNIQUE INDEX idx_warehouse_stock_variant_unique ON warehouse_stock(wareho
 CREATE INDEX idx_warehouse_stock_low ON warehouse_stock(warehouse_id, product_id) WHERE quantity <= min_quantity AND min_quantity > 0;
 
 -- Stock Movements (audit trail for all stock changes)
-CREATE TABLE stock_movements (
+CREATE TABLE IF NOT EXISTS stock_movements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
@@ -199,7 +199,7 @@ CREATE INDEX idx_stock_movements_created ON stock_movements(created_at);
 CREATE INDEX idx_stock_movements_reference ON stock_movements(reference_type, reference_id);
 
 -- Cycle Counts (stock counting)
-CREATE TABLE cycle_counts (
+CREATE TABLE IF NOT EXISTS cycle_counts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
