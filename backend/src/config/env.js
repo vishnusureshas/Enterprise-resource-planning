@@ -7,14 +7,8 @@ const required = [
   'SESSION_SECRET',
 ];
 
-// DB: Render/Railway provides DATABASE_URL, otherwise require individual vars
 if (!process.env.DATABASE_URL) {
   required.push('DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD');
-}
-
-// Redis: Render/Railway provides REDIS_URL, otherwise require individual vars
-if (!process.env.REDIS_URL) {
-  required.push('REDIS_HOST', 'REDIS_PORT');
 }
 
 const missing = required.filter((key) => !process.env[key]);
@@ -32,7 +26,7 @@ if (process.env.JWT_SECRET.length < 32) {
 
 if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
   process.env.ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
-  console.warn('⚠️ ENCRYPTION_KEY auto-generated. Set it in Render Dashboard for persistence across restarts.');
+  console.warn('⚠️ ENCRYPTION_KEY auto-generated. Set in Render Dashboard for persistence across restarts.');
 }
 
 module.exports = {
@@ -53,8 +47,8 @@ module.exports = {
   redis: process.env.REDIS_URL
     ? { url: process.env.REDIS_URL, db: 0, queueDb: 1 }
     : {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT, 10),
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT, 10) || 6379,
         password: process.env.REDIS_PASSWORD,
         db: parseInt(process.env.REDIS_DB, 10) || 0,
         queueDb: parseInt(process.env.REDIS_QUEUE_DB, 10) || 1,
