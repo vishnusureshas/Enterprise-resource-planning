@@ -34,10 +34,18 @@ const schema = z.object({
   name: z.string().min(1, "Name is required").max(255),
   description: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().default(true),
-  items: z.array(itemSchema).min(1, "At least one check required"),
 });
 
 type FormValues = z.infer<typeof schema>;
+type ItemValues = {
+  description: string;
+  expectedValue: string | null;
+  minValue: number | null;
+  maxValue: number | null;
+  unit: string | null;
+  isCritical: boolean;
+  inspectionMethod: string | null;
+};
 
 interface Props {
   open: boolean;
@@ -57,29 +65,16 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "", isActive: true, items: [] },
+    defaultValues: { name: "", description: "", isActive: true },
   });
 
-  const [items, setItems] = useState<FormValues["items"]>([]);
+  const [items, setItems] = useState<ItemValues[]>([]);
 
   useEffect(() => { if (!isEdit) setItems([]); }, [open, isEdit]);
 
   useEffect(() => {
     if (checklist) {
-      reset({
-        name: checklist.name,
-        description: checklist.description || "",
-        isActive: checklist.is_active,
-        items: checklist.items.map((i) => ({
-          description: i.description,
-          expectedValue: i.expected_value || null,
-          minValue: i.min_value ?? null,
-          maxValue: i.max_value ?? null,
-          unit: i.unit || null,
-          isCritical: i.is_critical,
-          inspectionMethod: i.inspection_method || null,
-        })),
-      });
+      reset({ name: checklist.name, description: checklist.description || "", isActive: checklist.is_active } as FormValues);
       setItems(checklist.items.map((i) => ({
         description: i.description,
         expectedValue: i.expected_value || null,
@@ -103,7 +98,7 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: FormValues) => createChecklist({ ...data, items }),
+    mutationFn: (data: FormValues & { items: ItemValues[] }) => createChecklist(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.QC_CHECKLISTS });
       toast({ title: "Checklist created", variant: "success" });
@@ -113,7 +108,7 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: FormValues) => updateChecklist(checklistId!, { ...data, items }),
+    mutationFn: (data: FormValues & { items: ItemValues[] }) => updateChecklist(checklistId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.QC_CHECKLISTS });
       toast({ title: "Checklist updated", variant: "success" });
@@ -128,8 +123,8 @@ export function ChecklistFormModal({ open, onOpenChange, checklistId }: Props) {
       return;
     }
     const payload = { ...data, items };
-    if (isEdit) updateMutation.mutate(payload);
-    else createMutation.mutate(payload);
+    if (isEdit) updateMutation.mutate(payload as FormValues & { items: ItemValues[] });
+    else createMutation.mutate(payload as FormValues & { items: ItemValues[] });
   };
 
   return (
