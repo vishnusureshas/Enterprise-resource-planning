@@ -17,6 +17,7 @@ const permissions = [
   'crm:read', 'crm:lead:create', 'crm:lead:update', 'crm:opportunity:create', 'crm:opportunity:update',
   'hr:read', 'hr:employee:create', 'hr:employee:update', 'hr:payroll:run',
   'manufacturing:read', 'manufacturing:create', 'manufacturing:update', 'manufacturing:delete', 'manufacturing:produce',
+  'quality:read', 'quality:create', 'quality:update', 'quality:delete',
   'report:read', 'report:export',
   'settings:read', 'settings:update',
   'admin:read', 'admin:user:manage', 'admin:org:manage',
