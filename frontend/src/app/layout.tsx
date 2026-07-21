@@ -4,7 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout/app-shell";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], preload: false });
 
 export const metadata: Metadata = {
   title: "ERP Admin Panel",
