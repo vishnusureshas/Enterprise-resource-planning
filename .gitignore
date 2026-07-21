@@ -9,3 +9,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+
+erp_data.sql
+erp_full_data.dump
+extracted_users.sql
