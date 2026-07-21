@@ -59,7 +59,11 @@ export default function NewWorkOrderPage() {
       toast({ title: "Work order created", variant: "success" });
       router.push(ROUTES.MANUFACTURING_WORK_ORDER_DETAIL(wo.id));
     },
-    onError: () => toast({ title: "Failed to create work order", variant: "destructive" }),
+    onError: (err: unknown) => {
+      console.error("Create WO error:", err);
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || "Failed to create work order";
+      toast({ title: msg, variant: "destructive" });
+    },
   });
 
   return (
