@@ -12,15 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { toast } from "@/components/ui/use-toast";
 import {
   getWorkCenter, createWorkCenter, updateWorkCenter,
-  type WorkCenter,
 } from "@/modules/manufacturing/manufacturing.api";
 import { CACHE_KEYS } from "@/lib/constants";
-import { Wrench, Info } from "lucide-react";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -92,7 +89,7 @@ export function WorkCenterFormModal({ open, onOpenChange, centerId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Work Center" : "Add Work Center"}</DialogTitle>
         </DialogHeader>
@@ -100,53 +97,48 @@ export function WorkCenterFormModal({ open, onOpenChange, centerId }: Props) {
         {isEdit && loadingCenter ? (
           <LoadingSpinner />
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Info className="h-4 w-4 text-muted-foreground" />
-                <h4 className="text-sm font-medium text-muted-foreground">Details</h4>
-              </div>
-              <Separator className="mb-4" />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input id="name" placeholder="Assembly Line A" {...register("name")} />
-                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs font-medium">Name *</Label>
+                  <Input id="name" placeholder="Assembly Line A" className="h-9 text-sm" {...register("name")} />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="code">Code *</Label>
-                  <Input id="code" placeholder="AL-A" {...register("code")} />
-                  {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
+                <div className="space-y-1.5">
+                  <Label htmlFor="code" className="text-xs font-medium">Code *</Label>
+                  <Input id="code" placeholder="AL-A" className="h-9 text-sm" {...register("code")} />
+                  {errors.code && <p className="text-xs text-destructive">{errors.code.message}</p>}
                 </div>
               </div>
-              <div className="mt-4 space-y-2">
-                <Label htmlFor="description">Description</Label>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="description" className="text-xs font-medium">Description</Label>
                 <textarea
                   id="description"
-                  className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex min-h-[56px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                   {...register("description")}
                 />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="capacityPerShift">Capacity Per Shift</Label>
-                  <Input id="capacityPerShift" type="number" min={1} {...register("capacityPerShift")} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="capacityPerShift" className="text-xs font-medium">Capacity / Shift</Label>
+                  <Input id="capacityPerShift" type="number" min={1} className="h-9 text-sm" {...register("capacityPerShift")} />
                 </div>
-                <div className="flex items-end pb-2">
+                <div className="flex items-end pb-0.5">
                   <div className="flex items-center gap-2">
                     <Switch id="isActive" checked={watch("isActive")} onCheckedChange={(c) => setValue("isActive", c)} />
-                    <Label htmlFor="isActive">Active</Label>
+                    <Label htmlFor="isActive" className="text-xs font-medium">Active</Label>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Separator />
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
-                {isEdit ? "Update" : "Create"} Work Center
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" size="sm" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
+                {isEdit ? "Update" : "Create"}
               </Button>
             </div>
           </form>

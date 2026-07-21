@@ -12,16 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { toast } from "@/components/ui/use-toast";
 import {
   getBom, createBom, updateBom,
-  type Bom,
 } from "@/modules/manufacturing/manufacturing.api";
 import { listProducts } from "@/modules/inventory/inventory.api";
 import { CACHE_KEYS } from "@/lib/constants";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 const itemSchema = z.object({
   productId: z.string().min(1, "Product is required"),
@@ -96,6 +94,13 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
           notes: i.notes || null,
         })),
       });
+      setItems(bom.items.map((i) => ({
+        productId: i.product_id,
+        quantity: i.quantity,
+        unitCost: i.unit_cost ?? null,
+        sequence: i.sequence,
+        notes: i.notes || null,
+      })));
     }
   }, [bom, reset]);
 
@@ -107,8 +112,8 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
     }
   }, [open, isEdit]);
 
-  const addItem = (item: { productId: string; productName: string }) => {
-    setItems((prev) => [...prev, { productId: item.productId, quantity: 1, unitCost: null, sequence: prev.length, notes: null }]);
+  const addItem = (productId: string) => {
+    setItems((prev) => [...prev, { productId, quantity: 1, unitCost: null, sequence: prev.length, notes: null }]);
   };
 
   const removeItem = (idx: number) => {
@@ -147,7 +152,7 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit BOM" : "Add Bill of Materials"}</DialogTitle>
         </DialogHeader>
@@ -155,120 +160,115 @@ export function BomFormModal({ open, onOpenChange, bomId }: Props) {
         {isEdit && loadingBom ? (
           <LoadingSpinner />
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">Header</h4>
-              <Separator className="mb-4" />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="productId">Finished Product *</Label>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Header</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="productId" className="text-xs font-medium">Finished Product *</Label>
                   <select
                     id="productId"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                     value={watch("productId")}
                     onChange={(e) => setValue("productId", e.target.value)}
                   >
-                    <option value="">Select product...</option>
+                    <option value="">Select...</option>
                     {products.filter((p) => p.is_active).map((p) => (
                       <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
                     ))}
                   </select>
-                  {errors.productId && <p className="text-sm text-destructive">{errors.productId.message}</p>}
+                  {errors.productId && <p className="text-xs text-destructive">{errors.productId.message}</p>}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">BOM Name *</Label>
-                  <Input id="name" placeholder="BOM for Widget" {...register("name")} />
-                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs font-medium">BOM Name *</Label>
+                  <Input id="name" placeholder="Widget BOM" className="h-9 text-sm" {...register("name")} />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="version">Version</Label>
-                  <Input id="version" type="number" min={1} {...register("version")} />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="version" className="text-xs font-medium">Version</Label>
+                  <Input id="version" type="number" min={1} className="h-9 text-sm" {...register("version")} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Output Quantity</Label>
-                  <Input id="quantity" type="number" min={0.0001} step={1} {...register("quantity")} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="quantity" className="text-xs font-medium">Output Qty</Label>
+                  <Input id="quantity" type="number" min={0.0001} step={1} className="h-9 text-sm" {...register("quantity")} />
                 </div>
-                <div className="flex items-end pb-2">
+                <div className="flex items-end pb-0.5">
                   <div className="flex items-center gap-2">
                     <Switch id="isActive" checked={watch("isActive")} onCheckedChange={(c) => setValue("isActive", c)} />
-                    <Label htmlFor="isActive">Active</Label>
+                    <Label htmlFor="isActive" className="text-xs font-medium">Active</Label>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 space-y-2">
-                <Label htmlFor="notes">Notes</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="notes" className="text-xs font-medium">Notes</Label>
                 <textarea
                   id="notes"
-                  className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex min-h-[52px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                   {...register("notes")}
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-muted-foreground">Raw Materials</h4>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw Materials</h4>
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Search..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="max-w-[200px] h-8 text-sm"
+                  className="max-w-[140px] h-7 text-xs"
                 />
               </div>
-              <Separator className="mb-4" />
-              <div className="flex flex-wrap gap-1 mb-3">
-                {products.filter((p) => p.is_active).slice(0, 10).map((p) => (
+              <div className="flex flex-wrap gap-1">
+                {products.filter((p) => p.is_active).slice(0, 8).map((p) => (
                   <Button
                     key={p.id}
-                    variant="outline" size="sm" className="text-xs"
-                    onClick={() => addItem({ productId: p.id, productName: p.name })}
+                    variant="outline" size="sm" className="h-7 text-xs px-2"
+                    onClick={() => addItem(p.id)}
+                    type="button"
                   >
-                    {p.sku}
+                    <Plus className="mr-1 h-3 w-3" />{p.sku}
                   </Button>
                 ))}
               </div>
               {items.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">Click a product above to add as raw material</p>
+                <p className="text-xs text-muted-foreground text-center py-3">Click a product above to add as raw material</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
                   {items.map((item, idx) => {
                     const prod = products.find((p) => p.id === item.productId);
                     return (
-                      <div key={idx} className="flex items-end gap-2 rounded-lg border p-3">
+                      <div key={idx} className="flex items-center gap-2 rounded-md border px-2.5 py-1.5">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{prod?.name || item.productId}</p>
-                          <p className="text-xs text-muted-foreground">{prod?.sku || ""}</p>
+                          <p className="text-xs font-medium truncate">{prod?.name || "Unknown"}</p>
+                          <p className="text-[10px] text-muted-foreground">{prod?.sku || ""}</p>
                         </div>
-                        <div className="w-20">
-                          <Label className="text-xs">Qty</Label>
+                        <div className="w-14">
                           <Input type="number" min={0.0001} step="any" value={item.quantity}
                             onChange={(e) => updateItem(idx, "quantity", parseFloat(e.target.value) || 0)}
-                            className="h-8 text-sm" />
+                            className="h-7 text-xs text-center" />
                         </div>
-                        <div className="w-20">
-                          <Label className="text-xs">Unit Cost</Label>
+                        <div className="w-16">
                           <Input type="number" min={0} step={0.01} value={item.unitCost ?? ""}
                             onChange={(e) => updateItem(idx, "unitCost", e.target.value ? parseFloat(e.target.value) : null)}
-                            className="h-8 text-sm" />
+                            className="h-7 text-xs text-center" placeholder="Cost" />
                         </div>
-                        <Button variant="ghost" size="icon" className="shrink-0" onClick={() => removeItem(idx)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeItem(idx)} type="button">
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                       </div>
                     );
                   })}
                 </div>
               )}
-              {errors.items && <p className="text-sm text-destructive mt-1">{errors.items.message}</p>}
+              {errors.items && <p className="text-xs text-destructive">{errors.items.message}</p>}
             </div>
 
-            <Separator />
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" size="sm" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
                 {isEdit ? "Update" : "Create"} BOM
               </Button>
             </div>
