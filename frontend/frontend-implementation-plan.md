@@ -109,6 +109,12 @@ frontend/
 │   │   ├── inventory/             # (Phase 4 — complete)
 │   │   │   ├── inventory.api.ts
 │   │   │   └── components/        # product-form, category-form, warehouse-form, transfer-stock, adjust-stock modals
+│   │   ├── vendor/                 # (Phase 6 — complete)
+│   │   │   ├── vendor.api.ts
+│   │   │   └── components/
+│   │   │       └── vendor-form-modal.tsx
+│   │   ├── procurement/           # (Phase 6 — complete)
+│   │   │   └── purchase-order.api.ts
 │   │   └── audit/
 │   ├── stores/
 │   │   ├── auth-store.ts          # Zustand + persist (user, tokens)
@@ -278,7 +284,7 @@ Endpoints:
     GET           /api/orders/:id/timeline
 ```
 
-### Phase 6: Vendors & Procurement (✅ Backend Complete, Frontend Pending)
+### Phase 6: Vendors & Procurement (✅ Complete)
 ```
 Backend: ✅ Vendor module (CRUD + contacts/contracts sub-resources + purchase order history)
          ✅ Purchase Order module (create with line items, status transitions, goods receiving, payments)
@@ -286,7 +292,8 @@ Backend: ✅ Vendor module (CRUD + contacts/contracts sub-resources + purchase o
             purchase_orders, purchase_order_items, purchase_order_taxes,
             goods_receipts, goods_receipt_items)
          ✅ Registered at /api/vendors and /api/purchase-orders
-Frontend: ❌ Not yet built
+Frontend: ✅ Vendors list + detail pages (DataTable + search + create/edit/delete)
+          ✅ Purchase Orders list + create + detail pages (DataTable + status transitions + goods receipt)
 
 Endpoints:
   Vendors:
@@ -313,7 +320,53 @@ Permissions (already seeded):
   procurement:approve, procurement:receive
 ```
 
-### Phase 7+: Remaining modules
+### Phase 7: Manufacturing (✅ Backend Complete, Frontend Pending)
+```
+Backend: ✅ 7 new DB tables (bom, bom_items, work_centers, work_orders,
+            work_order_operations, work_order_consumptions, work_order_outputs)
+         ✅ 20 API endpoints
+         ✅ BOM CRUD + recursive multi-level explosion (CTE)
+         ✅ Work Centers CRUD
+         ✅ Work Orders CRUD + status lifecycle (draft→planned→in_progress→completed)
+         ✅ Production actions: start, complete, record consumption (deduct stock), record output (add stock)
+         ✅ Auto-generated work order numbers (WO-2026-00001)
+         ✅ Stock integration: consumption deducts from warehouse_stock, output adds to warehouse_stock
+         ✅ Permissions: manufacturing:read, create, update, delete, produce
+         ✅ Registered at /api/manufacturing
+
+Frontend: ❌ Not yet built
+
+Endpoints:
+  Work Centers:
+    GET/POST      /api/manufacturing/work-centers
+    GET/PATCH/DELETE /api/manufacturing/work-centers/:id
+  BOM:
+    GET/POST      /api/manufacturing/bom
+    GET/PATCH/DELETE /api/manufacturing/bom/:id
+    GET           /api/manufacturing/bom/:id/explode
+  Work Orders:
+    GET/POST      /api/manufacturing/work-orders
+    GET           /api/manufacturing/work-orders/:id
+    PATCH         /api/manufacturing/work-orders/:id/status
+    POST          /api/manufacturing/work-orders/:id/start
+    POST          /api/manufacturing/work-orders/:id/complete
+    POST          /api/manufacturing/work-orders/:id/consume
+    POST          /api/manufacturing/work-orders/:id/output
+
+Tables:
+  work_centers         (org-scoped, code-unique)
+  bom                  (org-scoped, linked to products via product_id)
+  bom_items            (nested under bom, each item linked to a raw material product)
+  work_orders          (org-scoped, auto-numbered, linked to products/bom/work_centers)
+  work_order_operations (steps within a work order)
+  work_order_consumptions (raw materials consumed, links to warehouse_stock)
+  work_order_outputs    (finished goods produced, links to warehouse_stock)
+
+Status transitions: draft → planned → in_progress → completed
+                    any → cancelled
+```
+
+### Phase 8+: Remaining modules
 ```
 Each module follows the same pattern:
   ListPage → DataTable + Search + Pagination
@@ -322,9 +375,7 @@ Each module follows the same pattern:
   Delete → ConfirmDialog → DELETE
 
 Backend modules pending (in order):
-  Manufacturing                 → Phase 7
   Quality Control               → Phase 8
-  Quality Control               → Phase 10
   Shipping & Logistics          → Phase 9
   RMA / Returns                 → Phase 10
   Finance & Accounting          → Phase 11
@@ -366,6 +417,8 @@ Backend modules pending (in order):
 | Backend Customer module | ✅ Added: 4 DB tables, CRUD + addresses/contacts/notes sub-resources |
 | Backend Order module | ✅ Added: 4 DB tables, create with line items, status transitions, payments, bulk create |
 | Module order deviation | Customers (pending) + Orders (pending) were swapped to build as Phase 5 backend together since Customers is a dependency of Orders |
+| Vendor + Procurement frontend | Phase 6 frontend built ahead of original plan (was marked pending) |
+| Manufacturing backend | ✅ Phase 7 backend completed: 7 DB tables, 20 API endpoints, BOM explosion (recursive CTE), stock integration |
 
 ## 5. Route Definitions (Next.js App Router)
 
@@ -394,6 +447,11 @@ Backend modules pending (in order):
 | `/orders` | OrderListPage | ProtectedRoute (admin, sales_rep, manager) |
 | `/orders/new` | NewOrderPage | ProtectedRoute (admin, sales_rep, manager) |
 | `/orders/[id]` | OrderDetailPage | ProtectedRoute (admin, sales_rep, manager) |
+| `/vendors` | VendorListPage | ProtectedRoute (admin, procurement, finance) |
+| `/vendors/[id]` | VendorDetailPage | ProtectedRoute (admin, procurement, finance) |
+| `/procurement` | PurchaseOrderListPage | ProtectedRoute (admin, procurement, manager) |
+| `/procurement/new` | NewPurchaseOrderPage | ProtectedRoute (admin, procurement, manager) |
+| `/procurement/[id]` | PurchaseOrderDetailPage | ProtectedRoute (admin, procurement, manager) |
 | `/settings` | SettingsPage | ProtectedRoute (admin) |
 | `/403` | ForbiddenPage | None |
 | `/404` | NotFoundPage | None |
@@ -419,6 +477,18 @@ CACHE_KEYS = {
   WAREHOUSE:        (id) => ['warehouses', id],
   STOCK:            ['inventory', 'stock'],
   MOVEMENTS:        ['inventory', 'movements'],
+  VENDORS:          ['vendors'],
+  VENDOR:           (id) => ['vendors', id],
+  PURCHASE_ORDERS:  ['purchase-orders'],
+  PURCHASE_ORDER:   (id) => ['purchase-orders', id],
+
+  // Manufacturing (Phase 7 — pending frontend)
+  BOMS:             ['manufacturing', 'bom'],
+  BOM:              (id) => ['manufacturing', 'bom', id],
+  WORK_CENTERS:     ['manufacturing', 'work-centers'],
+  WORK_CENTER:      (id) => ['manufacturing', 'work-centers', id],
+  WORK_ORDERS:      ['manufacturing', 'work-orders'],
+  WORK_ORDER:       (id) => ['manufacturing', 'work-orders', id],
 }
 ```
 
@@ -451,8 +521,9 @@ start: Next.js scaffold
   ├── Inventory + Warehouse pages     ← Phase 4 (complete)
   ├── Customer + Order backend        ← Phase 5 (complete)
   ├── Customer + Order frontend       ← Phase 5 (complete)
-  ├── Vendor + Procurement backend    ← Phase 6 (backend complete)
-  └── Vendor + Procurement frontend   ← Phase 6 (pending)
+  ├── Vendor + Procurement backend    ← Phase 6 (complete)
+  ├── Vendor + Procurement frontend   ← Phase 6 (complete)
+  └── Manufacturing backend           ← Phase 7 (backend complete, frontend pending)
 ```
 
 ## 8. File Count (Current)
@@ -475,10 +546,12 @@ start: Next.js scaffold
 | modules/inventory (inventory.api.ts + 4 modals) | 5 |
 | modules/customer (customer.api.ts + customer-form-modal) | 2 |
 | modules/order (order.api.ts) | 1 |
+| modules/vendor (vendor.api.ts + vendor-form-modal) | 2 |
+| modules/procurement (purchase-order.api.ts) | 1 |
 | public (favicon, logo) | 2 |
 | env (.dev, .prod) | 2 |
 | middleware.ts | 1 |
-| **Total** | **~82 files** |
+| **Total** | **~86 files** |
 
 ---
 
@@ -489,4 +562,4 @@ start: Next.js scaffold
 | `/orders` page crashes on load | `frontend/src/app/(dashboard)/orders/page.tsx` | Internal Server Error (500) at runtime | Likely Next.js SSR crash — component tries to access browser-only API (`localStorage`, `window`) or a module fails to load during server render |
 | Auth refresh endpoint crashes | `backend/src/modules/auth/auth.controller.js:35` | `Cannot read properties of undefined (reading 'id')` on `POST /api/auth/refresh` | The refresh handler expects `req.user.id` but `req.user` is `undefined` when the refresh token middleware doesn't populate it |
 
-*This plan aligns with backend phases 1–6 at `d:\ERP\backend\erp-workflow-plan.md` and maps directly to the API endpoints, data models, and auth flows already built.*
+*This plan aligns with backend phases 1–7 at `d:\ERP\backend\erp-workflow-plan.md` and maps directly to the API endpoints, data models, and auth flows already built.*
