@@ -16,6 +16,7 @@ const permissions = [
   'finance:read', 'finance:journal:create', 'finance:journal:post', 'finance:account:read', 'finance:account:create', 'finance:account:update', 'finance:report:read',
   'crm:read', 'crm:lead:create', 'crm:lead:update', 'crm:opportunity:create', 'crm:opportunity:update',
   'hr:read', 'hr:employee:create', 'hr:employee:update', 'hr:payroll:run',
+  'manufacturing:read', 'manufacturing:create', 'manufacturing:update', 'manufacturing:delete', 'manufacturing:produce',
   'report:read', 'report:export',
   'settings:read', 'settings:update',
   'admin:read', 'admin:user:manage', 'admin:org:manage',
