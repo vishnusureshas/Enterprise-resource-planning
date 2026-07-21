@@ -2,7 +2,7 @@ services:
   - type: web
     name: erp-backend
     env: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: backend/Dockerfile
     plan: starter
     healthCheckPath: /api/health
     startCommand: sh -c "npm run migrate:up && node src/server.js"
