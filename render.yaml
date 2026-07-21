@@ -21,13 +21,19 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: ENCRYPTION_KEY
-        value: "" # Auto-generated at startup if missing. Set in Dashboard for persistence.
+        # IMPORTANT: Set a persistent 64-char hex key in Render Dashboard for data encryption across restarts.
+        # Auto-generated at startup if missing/empty. DO NOT leave empty in production.
+        value: ""
       - key: DATABASE_URL
         fromDatabase:
           name: erp-db
           property: connectionString
       - key: CORS_ORIGINS
         value: "" # Comma-separated frontend URLs (e.g. https://erp-frontend.onrender.com,https://your-custom-domain.com)
+      - key: REDIS_URL
+        # RECOMMENDED: Set for production. Without Redis, the app uses in-memory fallbacks (sessions,
+        # rate limiting, refresh tokens) which reset on restart. Use Redis Cloud free tier or Upstash.
+        value: ""
 
   - type: web
     name: erp-frontend

@@ -1,4 +1,4 @@
-const { db, transaction } = require('../../config/db');
+const { query: db, transaction } = require('../../config/db');
 const { NotFoundError, ConflictError } = require('../../shared/errors');
 const logger = require('../../config/logger');
 

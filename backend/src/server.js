@@ -92,8 +92,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session
+const sessionStore = redis.status === 'ready'
+  ? new RedisStoreSession({ client: redis, prefix: 'sess:' })
+  : new session.MemoryStore();
+
 app.use(session({
-  store: new RedisStoreSession({ client: redis, prefix: 'sess:' }),
+  store: sessionStore,
   secret: env.session.secret,
   resave: false,
   saveUninitialized: false,
@@ -104,6 +108,10 @@ app.use(session({
     sameSite: 'lax',
   },
 }));
+
+if (redis.status !== 'ready') {
+  logger.warn('Redis not available, using in-memory session store');
+}
 
 // Rate limiting
 app.use('/api/auth', limiters.auth);
