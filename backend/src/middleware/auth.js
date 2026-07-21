@@ -15,13 +15,15 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
-    // Check if token is blacklisted (revoked)
-    const isBlacklisted = await redis.get(`blacklist:${token}`);
-    if (isBlacklisted) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'TOKEN_REVOKED', message: 'Token has been revoked' },
-      });
+    // Check if token is blacklisted (revoked) — skip if Redis unavailable
+    if (redis.status === 'ready') {
+      const isBlacklisted = await redis.get(`blacklist:${token}`);
+      if (isBlacklisted) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'TOKEN_REVOKED', message: 'Token has been revoked' },
+        });
+      }
     }
 
     // Verify access token

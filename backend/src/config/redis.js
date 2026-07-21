@@ -1,8 +1,9 @@
 const Redis = require('ioredis');
+const { redis: redisConfig } = require('./env');
 
 const createRedisClient = (db = 0) => {
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL, {
+  if (redisConfig.url) {
+    return new Redis(redisConfig.url, {
       db,
       retryStrategy: (times) => Math.min(times * 50, 2000),
       enableReadyCheck: true,
@@ -11,9 +12,9 @@ const createRedisClient = (db = 0) => {
     });
   }
   return new Redis({
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT, 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: redisConfig.host,
+    port: redisConfig.port,
+    password: redisConfig.password || undefined,
     db,
     retryStrategy: (times) => Math.min(times * 50, 2000),
     enableReadyCheck: true,
@@ -22,9 +23,9 @@ const createRedisClient = (db = 0) => {
   });
 };
 
-const redis = createRedisClient(parseInt(process.env.REDIS_DB, 10));
-const redisQueue = createRedisClient(parseInt(process.env.REDIS_QUEUE_DB, 10));
-const redisSub = createRedisClient(parseInt(process.env.REDIS_DB, 10));
+const redis = createRedisClient(redisConfig.db);
+const redisQueue = createRedisClient(redisConfig.queueDb);
+const redisSub = createRedisClient(redisConfig.db);
 
 redis.on('error', (err) => console.error('Redis error:', err));
 redisQueue.on('error', (err) => console.error('Redis Queue error:', err));
