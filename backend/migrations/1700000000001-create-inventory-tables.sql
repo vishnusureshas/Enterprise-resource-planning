@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS inventory_categories (
     UNIQUE(organization_id, slug)
 );
 
-CREATE INDEX idx_inv_categories_org ON inventory_categories(organization_id);
-CREATE INDEX idx_inv_categories_parent ON inventory_categories(parent_id);
-CREATE INDEX idx_inv_categories_active ON inventory_categories(organization_id, is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_inv_categories_org ON inventory_categories(organization_id);
+CREATE INDEX IF NOT EXISTS idx_inv_categories_parent ON inventory_categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_inv_categories_active ON inventory_categories(organization_id, is_active) WHERE deleted_at IS NULL;
 
 -- Products (Inventory Items)
 CREATE TABLE IF NOT EXISTS products (
@@ -49,11 +49,11 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE(organization_id, sku)
 );
 
-CREATE INDEX idx_products_org ON products(organization_id);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_sku ON products(organization_id, sku) WHERE deleted_at IS NULL;
-CREATE INDEX idx_products_active ON products(organization_id, is_active) WHERE deleted_at IS NULL;
-CREATE INDEX idx_products_search ON products USING GIN(to_tsvector('simple', name || ' ' || COALESCE(description, '')));
+CREATE INDEX IF NOT EXISTS idx_products_org ON products(organization_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(organization_id, sku) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(organization_id, is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_products_search ON products USING GIN(to_tsvector('simple', name || ' ' || COALESCE(description, '')));
 
 -- Product Variants
 CREATE TABLE IF NOT EXISTS product_variants (
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS product_variants (
     UNIQUE(product_id, sku)
 );
 
-CREATE INDEX idx_product_variants_product ON product_variants(product_id);
-CREATE INDEX idx_product_variants_sku ON product_variants(sku);
+CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_variants_sku ON product_variants(sku);
 
 -- Product Barcodes
 CREATE TABLE IF NOT EXISTS product_barcodes (
@@ -90,8 +90,8 @@ CREATE TABLE IF NOT EXISTS product_barcodes (
     )
 );
 
-CREATE INDEX idx_product_barcodes_product ON product_barcodes(product_id);
-CREATE INDEX idx_product_barcodes_variant ON product_barcodes(variant_id);
+CREATE INDEX IF NOT EXISTS idx_product_barcodes_product ON product_barcodes(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_barcodes_variant ON product_barcodes(variant_id);
 
 -- Product-Supplier junction
 CREATE TABLE IF NOT EXISTS product_suppliers (
@@ -126,8 +126,8 @@ CREATE TABLE IF NOT EXISTS warehouses (
     UNIQUE(organization_id, code)
 );
 
-CREATE INDEX idx_warehouses_org ON warehouses(organization_id);
-CREATE INDEX idx_warehouses_active ON warehouses(organization_id, is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_warehouses_org ON warehouses(organization_id);
+CREATE INDEX IF NOT EXISTS idx_warehouses_active ON warehouses(organization_id, is_active) WHERE deleted_at IS NULL;
 
 -- Warehouse Bin Locations
 CREATE TABLE IF NOT EXISTS warehouse_bin_locations (
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS warehouse_bin_locations (
     UNIQUE(warehouse_id, code)
 );
 
-CREATE INDEX idx_bin_locations_warehouse ON warehouse_bin_locations(warehouse_id);
-CREATE INDEX idx_bin_locations_zone ON warehouse_bin_locations(warehouse_id, zone);
+CREATE INDEX IF NOT EXISTS idx_bin_locations_warehouse ON warehouse_bin_locations(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_bin_locations_zone ON warehouse_bin_locations(warehouse_id, zone);
 
 -- Warehouse Stock (product inventory per warehouse)
 CREATE TABLE IF NOT EXISTS warehouse_stock (
@@ -165,13 +165,13 @@ CREATE TABLE IF NOT EXISTS warehouse_stock (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_warehouse_stock_warehouse ON warehouse_stock(warehouse_id);
-CREATE INDEX idx_warehouse_stock_product ON warehouse_stock(product_id);
-CREATE INDEX idx_warehouse_stock_variant ON warehouse_stock(variant_id);
-CREATE INDEX idx_warehouse_stock_bin ON warehouse_stock(bin_location_id);
-CREATE UNIQUE INDEX idx_warehouse_stock_unique ON warehouse_stock(warehouse_id, product_id) WHERE variant_id IS NULL;
-CREATE UNIQUE INDEX idx_warehouse_stock_variant_unique ON warehouse_stock(warehouse_id, product_id, variant_id) WHERE variant_id IS NOT NULL;
-CREATE INDEX idx_warehouse_stock_low ON warehouse_stock(warehouse_id, product_id) WHERE quantity <= min_quantity AND min_quantity > 0;
+CREATE INDEX IF NOT EXISTS idx_warehouse_stock_warehouse ON warehouse_stock(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_warehouse_stock_product ON warehouse_stock(product_id);
+CREATE INDEX IF NOT EXISTS idx_warehouse_stock_variant ON warehouse_stock(variant_id);
+CREATE INDEX IF NOT EXISTS idx_warehouse_stock_bin ON warehouse_stock(bin_location_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_warehouse_stock_unique ON warehouse_stock(warehouse_id, product_id) WHERE variant_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_warehouse_stock_variant_unique ON warehouse_stock(warehouse_id, product_id, variant_id) WHERE variant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_warehouse_stock_low ON warehouse_stock(warehouse_id, product_id) WHERE quantity <= min_quantity AND min_quantity > 0;
 
 -- Stock Movements (audit trail for all stock changes)
 CREATE TABLE IF NOT EXISTS stock_movements (
@@ -191,12 +191,12 @@ CREATE TABLE IF NOT EXISTS stock_movements (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_stock_movements_org ON stock_movements(organization_id);
-CREATE INDEX idx_stock_movements_warehouse ON stock_movements(warehouse_id);
-CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
-CREATE INDEX idx_stock_movements_type ON stock_movements(movement_type);
-CREATE INDEX idx_stock_movements_created ON stock_movements(created_at);
-CREATE INDEX idx_stock_movements_reference ON stock_movements(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_org ON stock_movements(organization_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_warehouse ON stock_movements(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_type ON stock_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_reference ON stock_movements(reference_type, reference_id);
 
 -- Cycle Counts (stock counting)
 CREATE TABLE IF NOT EXISTS cycle_counts (
@@ -216,9 +216,9 @@ CREATE TABLE IF NOT EXISTS cycle_counts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_cycle_counts_org ON cycle_counts(organization_id);
-CREATE INDEX idx_cycle_counts_warehouse ON cycle_counts(warehouse_id);
-CREATE INDEX idx_cycle_counts_status ON cycle_counts(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_cycle_counts_org ON cycle_counts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_cycle_counts_warehouse ON cycle_counts(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_cycle_counts_status ON cycle_counts(organization_id, status);
 
 -- Movement type enum values
 COMMENT ON COLUMN stock_movements.movement_type IS 'Values: receipt, sale, transfer_out, transfer_in, adjustment, consumption, production, return, initial';

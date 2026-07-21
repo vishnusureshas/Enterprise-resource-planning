@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS vendors (
     UNIQUE(organization_id, code)
 );
 
-CREATE INDEX idx_vendors_org ON vendors(organization_id);
-CREATE INDEX idx_vendors_email ON vendors(organization_id, email);
-CREATE INDEX idx_vendors_status ON vendors(organization_id, status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_vendors_search ON vendors USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
+CREATE INDEX IF NOT EXISTS idx_vendors_org ON vendors(organization_id);
+CREATE INDEX IF NOT EXISTS idx_vendors_email ON vendors(organization_id, email);
+CREATE INDEX IF NOT EXISTS idx_vendors_status ON vendors(organization_id, status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_vendors_search ON vendors USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
 
 CREATE TABLE IF NOT EXISTS vendor_contacts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS vendor_contacts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_vendor_contacts_vendor ON vendor_contacts(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_contacts_vendor ON vendor_contacts(vendor_id);
 
 CREATE TABLE IF NOT EXISTS vendor_contracts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS vendor_contracts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_vendor_contracts_vendor ON vendor_contracts(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_contracts_vendor ON vendor_contracts(vendor_id);
 
 -- ─── Purchase Orders ─────────────────────────────────────────────
 
@@ -92,10 +92,10 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
     UNIQUE(organization_id, po_number)
 );
 
-CREATE INDEX idx_purchase_orders_org ON purchase_orders(organization_id);
-CREATE INDEX idx_purchase_orders_vendor ON purchase_orders(vendor_id);
-CREATE INDEX idx_purchase_orders_status ON purchase_orders(organization_id, status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_purchase_orders_date ON purchase_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_org ON purchase_orders(organization_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_vendor ON purchase_orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON purchase_orders(organization_id, status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_date ON purchase_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS purchase_order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -115,8 +115,8 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_purchase_order_items_order ON purchase_order_items(purchase_order_id);
-CREATE INDEX idx_purchase_order_items_product ON purchase_order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_order_items_order ON purchase_order_items(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_order_items_product ON purchase_order_items(product_id);
 
 CREATE TABLE IF NOT EXISTS purchase_order_taxes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS purchase_order_taxes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_purchase_order_taxes_order ON purchase_order_taxes(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_order_taxes_order ON purchase_order_taxes(purchase_order_id);
 
 CREATE TABLE IF NOT EXISTS goods_receipts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS goods_receipts (
     UNIQUE(organization_id, receipt_number)
 );
 
-CREATE INDEX idx_goods_receipts_order ON goods_receipts(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_goods_receipts_order ON goods_receipts(purchase_order_id);
 
 CREATE TABLE IF NOT EXISTS goods_receipt_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -153,5 +153,5 @@ CREATE TABLE IF NOT EXISTS goods_receipt_items (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_goods_receipt_items_receipt ON goods_receipt_items(goods_receipt_id);
-CREATE INDEX idx_goods_receipt_items_item ON goods_receipt_items(purchase_order_item_id);
+CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_receipt ON goods_receipt_items(goods_receipt_id);
+CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_item ON goods_receipt_items(purchase_order_item_id);

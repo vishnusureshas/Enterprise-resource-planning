@@ -23,10 +23,10 @@ CREATE TABLE IF NOT EXISTS customers (
     UNIQUE(organization_id, code)
 );
 
-CREATE INDEX idx_customers_org ON customers(organization_id);
-CREATE INDEX idx_customers_email ON customers(organization_id, email);
-CREATE INDEX idx_customers_status ON customers(organization_id, status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_customers_search ON customers USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
+CREATE INDEX IF NOT EXISTS idx_customers_org ON customers(organization_id);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(organization_id, email);
+CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(organization_id, status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_customers_search ON customers USING GIN(to_tsvector('simple', name || ' ' || COALESCE(company_name, '')));
 
 CREATE TABLE IF NOT EXISTS customer_addresses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS customer_addresses (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_addresses_customer ON customer_addresses(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customer_addresses_customer ON customer_addresses(customer_id);
 
 CREATE TABLE IF NOT EXISTS customer_contacts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS customer_contacts (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_contacts_customer ON customer_contacts(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customer_contacts_customer ON customer_contacts(customer_id);
 
 CREATE TABLE IF NOT EXISTS customer_notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS customer_notes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_notes_customer ON customer_notes(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customer_notes_customer ON customer_notes(customer_id);
 
 -- ─── Sales Orders ──────────────────────────────────────────────────
 
@@ -98,10 +98,10 @@ CREATE TABLE IF NOT EXISTS sales_orders (
     UNIQUE(organization_id, order_number)
 );
 
-CREATE INDEX idx_sales_orders_org ON sales_orders(organization_id);
-CREATE INDEX idx_sales_orders_customer ON sales_orders(customer_id);
-CREATE INDEX idx_sales_orders_status ON sales_orders(organization_id, status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_sales_orders_date ON sales_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_sales_orders_org ON sales_orders(organization_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_customer ON sales_orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_status ON sales_orders(organization_id, status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_sales_orders_date ON sales_orders(organization_id, order_date DESC) WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS sales_order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -120,8 +120,8 @@ CREATE TABLE IF NOT EXISTS sales_order_items (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_sales_order_items_order ON sales_order_items(sales_order_id);
-CREATE INDEX idx_sales_order_items_product ON sales_order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_sales_order_items_order ON sales_order_items(sales_order_id);
+CREATE INDEX IF NOT EXISTS idx_sales_order_items_product ON sales_order_items(product_id);
 
 CREATE TABLE IF NOT EXISTS sales_order_payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS sales_order_payments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_sales_order_payments_order ON sales_order_payments(sales_order_id);
+CREATE INDEX IF NOT EXISTS idx_sales_order_payments_order ON sales_order_payments(sales_order_id);
 
 CREATE TABLE IF NOT EXISTS sales_order_taxes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -146,4 +146,4 @@ CREATE TABLE IF NOT EXISTS sales_order_taxes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_sales_order_taxes_order ON sales_order_taxes(sales_order_id);
+CREATE INDEX IF NOT EXISTS idx_sales_order_taxes_order ON sales_order_taxes(sales_order_id);

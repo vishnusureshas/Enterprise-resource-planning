@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS organizations (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_organizations_slug ON organizations(slug);
-CREATE INDEX idx_organizations_status ON organizations(status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_organizations_slug ON organizations(slug);
+CREATE INDEX IF NOT EXISTS idx_organizations_status ON organizations(status) WHERE deleted_at IS NULL;
 
 -- Roles
 CREATE TABLE IF NOT EXISTS roles (
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS roles (
     UNIQUE(organization_id, name)
 );
 
-CREATE INDEX idx_roles_organization ON roles(organization_id);
+CREATE INDEX IF NOT EXISTS idx_roles_organization ON roles(organization_id);
 
 -- Permissions
 CREATE TABLE IF NOT EXISTS permissions (
@@ -72,9 +72,9 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE(organization_id, email)
 );
 
-CREATE INDEX idx_users_organization ON users(organization_id);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_status ON users(status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_users_organization ON users(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status) WHERE deleted_at IS NULL;
 
 -- User-Roles junction
 CREATE TABLE IF NOT EXISTS user_roles (
@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS user_roles (
     PRIMARY KEY (user_id, role_id)
 );
 
-CREATE INDEX idx_user_roles_user ON user_roles(user_id);
-CREATE INDEX idx_user_roles_role ON user_roles(role_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role_id);
 
 -- User Sessions (for refresh token tracking)
 CREATE TABLE IF NOT EXISTS user_sessions (
@@ -100,9 +100,9 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_sessions_user ON user_sessions(user_id);
-CREATE INDEX idx_user_sessions_session ON user_sessions(session_id);
-CREATE INDEX idx_user_sessions_expires ON user_sessions(expires_at) WHERE revoked = FALSE;
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_session ON user_sessions(session_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at) WHERE revoked = FALSE;
 
 -- Audit Logs
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -118,10 +118,10 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_audit_logs_org ON audit_logs(organization_id);
-CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
-CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_org ON audit_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
 
 -- System default permissions
 INSERT INTO permissions (name, description, category) VALUES
