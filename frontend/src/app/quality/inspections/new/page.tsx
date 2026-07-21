@@ -44,8 +44,10 @@ export default function NewInspectionPage() {
       router.push(ROUTES.QUALITY_INSPECTION_DETAIL(insp.id));
     },
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || "Failed to create inspection";
-      toast({ title: msg, variant: "destructive" });
+      const errorData = (err as { response?: { data?: { error?: { message?: string; details?: Array<{ field: string; message: string }> } } } })?.response?.data?.error;
+      const msg = errorData?.message || "Failed to create inspection";
+      const details = errorData?.details?.map((d) => `${d.field}: ${d.message}`).join("; ") || "";
+      toast({ title: msg, description: details || undefined, variant: "destructive" });
     },
   });
 
@@ -83,11 +85,14 @@ export default function NewInspectionPage() {
               <div className="space-y-2">
                 <Label>Source ID *</Label>
                 <input
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="UUID of the purchase order item, work order output, or sales order item"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono text-xs"
+                  placeholder="Paste UUID here, e.g. 550e8400-e29b-41d4-a716-446655440000"
                   value={referenceId}
                   onChange={(e) => setReferenceId(e.target.value)}
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Must be a valid UUID v4. Find it in the source module (e.g., Work Order output table, PO items).
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Checklist</Label>
