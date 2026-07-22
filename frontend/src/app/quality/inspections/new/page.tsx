@@ -17,6 +17,8 @@ const REF_TYPES = [
   { value: "sales_order_item", label: "Sales Order Item" },
 ];
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default function NewInspectionPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -24,6 +26,8 @@ export default function NewInspectionPage() {
   const [referenceType, setReferenceType] = useState("purchase_order_item");
   const [referenceId, setReferenceId] = useState("");
   const [notes, setNotes] = useState("");
+
+  const isUuidValid = referenceId.length === 0 || UUID_REGEX.test(referenceId);
 
   const { data: checklistsData } = useQuery({
     queryKey: [...CACHE_KEYS.QC_CHECKLISTS, { limit: 100 }],
@@ -90,6 +94,9 @@ export default function NewInspectionPage() {
                   value={referenceId}
                   onChange={(e) => setReferenceId(e.target.value)}
                 />
+                {!isUuidValid && (
+                  <p className="text-[10px] text-destructive">Invalid UUID v4 format. Must match xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx</p>
+                )}
                 <p className="text-[10px] text-muted-foreground">
                   Must be a valid UUID v4. Find it in the source module (e.g., Work Order output table, PO items).
                 </p>
@@ -139,7 +146,7 @@ export default function NewInspectionPage() {
 
           <Button
             className="w-full" size="lg"
-            disabled={!referenceId || createMutation.isPending}
+            disabled={!referenceId || !isUuidValid || createMutation.isPending}
             onClick={() => createMutation.mutate()}
           >
             {createMutation.isPending ? "Creating..." : "Create Inspection"}
