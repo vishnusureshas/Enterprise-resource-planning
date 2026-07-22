@@ -76,7 +76,12 @@ export default function InspectionDetailPage() {
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.QC_INSPECTIONS });
       toast({ title: "Results recorded", variant: "success" });
     },
-    onError: () => toast({ title: "Failed to record results", variant: "destructive" }),
+    onError: (err: unknown) => {
+      const errorData = (err as { response?: { data?: { error?: { message?: string; details?: Array<{ field: string; message: string }> } } } })?.response?.data?.error;
+      const msg = errorData?.message || "Failed to record results";
+      const details = errorData?.details?.map((d) => `${d.field}: ${d.message}`).join("; ") || "";
+      toast({ title: msg, description: details || undefined, variant: "destructive" });
+    },
   });
 
   function initResults(insp: Inspection) {
