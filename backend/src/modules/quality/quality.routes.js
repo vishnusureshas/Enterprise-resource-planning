@@ -5,6 +5,7 @@ const {
   listChecklists, getChecklist, createChecklist, updateChecklist, deleteChecklist,
   listInspections, getInspection, createInspection, recordResults, deleteInspection,
   listCriteria, getCriterion, createCriterion, updateCriterion, deleteCriterion,
+  listReferenceItems,
   getInspectionReport,
 } = require('./quality.controller');
 
@@ -40,6 +41,9 @@ router.get('/criteria/:id', authorize('quality:read'), getCriterion);
 router.post('/criteria', authorize('quality:create'), validate(createCriterionSchema), auditLog('quality.criteria.create', { auditableType: 'quality_criterion' }), createCriterion);
 router.patch('/criteria/:id', authorize('quality:update'), validate(updateCriterionSchema), auditLog('quality.criteria.update', { auditableType: 'quality_criterion', auditableId: (req) => req.params.id }), updateCriterion);
 router.delete('/criteria/:id', authorize('quality:delete'), auditLog('quality.criteria.delete', { auditableType: 'quality_criterion', auditableId: (req) => req.params.id }), deleteCriterion);
+
+// Reference Items (for dropdown selection)
+router.get('/references/:referenceType', authorize('quality:read'), listReferenceItems);
 
 // Reports
 router.get('/reports/:referenceType/:referenceId', authorize('quality:read'), getInspectionReport);

@@ -177,5 +177,6 @@ export const CACHE_KEYS = {
   QC_INSPECTION: (id: string) => ["quality", "inspections", id],
   QC_CRITERIA: ["quality", "criteria"],
   QC_CRITERION: (id: string) => ["quality", "criteria", id],
+  QC_REFERENCE_ITEMS: (type: string) => ["quality", "references", type],
   QC_REPORT: (type: string, refId: string) => ["quality", "reports", type, refId],
 } as const;

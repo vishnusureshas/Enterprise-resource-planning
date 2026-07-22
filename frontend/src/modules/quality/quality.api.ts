@@ -147,6 +147,36 @@ export interface UpdateCriterionPayload {
   isActive?: boolean;
 }
 
+// ─── Reference Items (for dropdown) ──────────────────────────────────
+
+export interface ReferenceItem {
+  id: string;
+  product_code?: string;
+  product_name?: string;
+  po_number?: string;
+  order_number?: string;
+  work_order_number?: string;
+  batch_number?: string;
+}
+
+export function getReferenceItemLabel(item: ReferenceItem, referenceType: string): string {
+  switch (referenceType) {
+    case "purchase_order_item":
+      return `[${item.po_number}] ${item.product_name}${item.product_code ? ` (${item.product_code})` : ""}`;
+    case "work_order_output":
+      return `[${item.work_order_number}] ${item.product_name}${item.batch_number ? ` — Batch ${item.batch_number}` : ""}${item.product_code ? ` (${item.product_code})` : ""}`;
+    case "sales_order_item":
+      return `[${item.order_number}] ${item.product_name}${item.product_code ? ` (${item.product_code})` : ""}`;
+    default:
+      return item.product_name || item.id;
+  }
+}
+
+export async function listReferenceItems(referenceType: string): Promise<ReferenceItem[]> {
+  const response = await api.get<ApiResponse<ReferenceItem[]>>(`/quality/references/${referenceType}`);
+  return response.data.data;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 const INSPECTION_STATUSES: Record<string, string> = {

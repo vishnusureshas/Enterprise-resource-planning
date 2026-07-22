@@ -383,6 +383,58 @@ class QualityRepository {
     return result.rows[0] || null;
   }
 
+  // ─── Reference Items (for dropdown) ───────────────────────────────
+
+  async findPurchaseOrderItems(organizationId) {
+    const result = await db.query(
+      `SELECT poi.id, poi.product_code, poi.product_name, po.po_number
+       FROM purchase_order_items poi
+       JOIN purchase_orders po ON po.id = poi.purchase_order_id
+       WHERE po.organization_id = $1 AND po.deleted_at IS NULL
+       ORDER BY po.created_at DESC, poi.created_at ASC`,
+      [organizationId]
+    );
+    return result.rows;
+  }
+
+  async findWorkOrderOutputs(organizationId) {
+    const result = await db.query(
+      `SELECT woo.id, woo.batch_number, p.name AS product_name, p.sku AS product_code, wo.work_order_number
+       FROM work_order_outputs woo
+       JOIN work_orders wo ON wo.id = woo.work_order_id
+       JOIN products p ON p.id = woo.product_id
+       WHERE wo.organization_id = $1 AND wo.deleted_at IS NULL
+       ORDER BY woo.created_at DESC`,
+      [organizationId]
+    );
+    return result.rows;
+  }
+
+  async findSalesOrderItems(organizationId) {
+    const result = await db.query(
+      `SELECT soi.id, soi.product_code, soi.product_name, so.order_number
+       FROM sales_order_items soi
+       JOIN sales_orders so ON so.id = soi.sales_order_id
+       WHERE so.organization_id = $1 AND so.deleted_at IS NULL
+       ORDER BY so.created_at DESC, soi.created_at ASC`,
+      [organizationId]
+    );
+    return result.rows;
+  }
+
+  async findReferenceItems(referenceType, organizationId) {
+    switch (referenceType) {
+      case 'purchase_order_item':
+        return this.findPurchaseOrderItems(organizationId);
+      case 'work_order_output':
+        return this.findWorkOrderOutputs(organizationId);
+      case 'sales_order_item':
+        return this.findSalesOrderItems(organizationId);
+      default:
+        return [];
+    }
+  }
+
   // ─── Reports ────────────────────────────────────────────────────────
 
   async findInspectionsByReference(referenceType, referenceId, organizationId) {

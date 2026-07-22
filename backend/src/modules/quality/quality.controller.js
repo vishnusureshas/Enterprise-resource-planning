@@ -103,6 +103,14 @@ const deleteCriterion = asyncHandler(async (req, res) => {
   res.json({ success: true, data: null });
 });
 
+// ─── Reference Items (for dropdown) ──────────────────────────────────
+
+const listReferenceItems = asyncHandler(async (req, res) => {
+  const { referenceType } = req.params;
+  const items = await service.listReferenceItems(referenceType, req.user.organizationId);
+  res.json({ success: true, data: items });
+});
+
 // ─── Reports ──────────────────────────────────────────────────────────
 
 const getInspectionReport = asyncHandler(async (req, res) => {
@@ -115,5 +123,6 @@ module.exports = {
   listChecklists, getChecklist, createChecklist, updateChecklist, deleteChecklist,
   listInspections, getInspection, createInspection, recordResults, deleteInspection,
   listCriteria, getCriterion, createCriterion, updateCriterion, deleteCriterion,
+  listReferenceItems,
   getInspectionReport,
 };

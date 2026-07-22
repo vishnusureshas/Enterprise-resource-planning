@@ -86,6 +86,12 @@ class QualityService {
     if (!result) throw new NotFoundError('Inspection criterion not found');
   }
 
+  // ─── Reference Items (for dropdown) ───────────────────────────────
+
+  async listReferenceItems(referenceType, organizationId) {
+    return repo.findReferenceItems(referenceType, organizationId);
+  }
+
   // ─── Reports ────────────────────────────────────────────────────────
 
   async getInspectionReport(referenceType, referenceId, organizationId) {
