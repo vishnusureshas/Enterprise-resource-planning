@@ -59,6 +59,11 @@ const createInspection = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: inspection });
 });
 
+const updateInspectionStatus = asyncHandler(async (req, res) => {
+  const inspection = await service.updateInspectionStatus(req.params.id, req.user.organizationId, req.body.status, req.user.id);
+  res.json({ success: true, data: inspection });
+});
+
 const recordResults = asyncHandler(async (req, res) => {
   const inspection = await service.recordResults(req.params.id, req.user.organizationId, req.body, req.user.id);
   res.json({ success: true, data: inspection });
@@ -121,7 +126,7 @@ const getInspectionReport = asyncHandler(async (req, res) => {
 
 module.exports = {
   listChecklists, getChecklist, createChecklist, updateChecklist, deleteChecklist,
-  listInspections, getInspection, createInspection, recordResults, deleteInspection,
+  listInspections, getInspection, createInspection, recordResults, updateInspectionStatus, deleteInspection,
   listCriteria, getCriterion, createCriterion, updateCriterion, deleteCriterion,
   listReferenceItems,
   getInspectionReport,

@@ -15,11 +15,11 @@ import { toast } from "@/components/ui/use-toast";
 import {
   getInspection, deleteInspection, getChecklist,
   getInspectionStatusLabel, getInspectionStatusColor, getReferenceLabel,
-  recordResults,
+  recordResults, updateInspectionStatus,
   type Inspection, type RecordResultsPayload,
 } from "@/modules/quality/quality.api";
 import { CACHE_KEYS, ROUTES } from "@/lib/constants";
-import { ArrowLeft, Trash2, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Trash2, ClipboardCheck, Play } from "lucide-react";
 
 interface ResultFormEntry {
   checklistItemId: string | null;
@@ -58,6 +58,16 @@ export default function InspectionDetailPage() {
   const [results, setResults] = useState<ResultFormEntry[]>([]);
 
   const isEditable = inspection && (inspection.status === "pending" || inspection.status === "in_progress");
+
+  const startMutation = useMutation({
+    mutationFn: () => updateInspectionStatus(id, "in_progress"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.QC_INSPECTION(id) });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.QC_INSPECTIONS });
+      toast({ title: "Inspection started", variant: "success" });
+    },
+    onError: () => toast({ title: "Failed to start inspection", variant: "destructive" }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteInspection(id),
@@ -136,9 +146,16 @@ export default function InspectionDetailPage() {
             {getInspectionStatusLabel(inspection.status)}
           </Badge>
         </div>
-        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-          <Trash2 className="mr-2 h-4 w-4" /> Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          {inspection.status === "pending" && (
+            <Button variant="default" size="sm" onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
+              <Play className="mr-2 h-4 w-4" /> {startMutation.isPending ? "Starting..." : "Start Inspection"}
+            </Button>
+          )}
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

@@ -260,6 +260,11 @@ export async function recordResults(id: string, data: RecordResultsPayload): Pro
   return response.data.data;
 }
 
+export async function updateInspectionStatus(id: string, status: string): Promise<Inspection> {
+  const response = await api.patch<ApiResponse<Inspection>>(`/quality/inspections/${id}/status`, { status });
+  return response.data.data;
+}
+
 export async function deleteInspection(id: string): Promise<void> {
   await api.delete(`/quality/inspections/${id}`);
 }

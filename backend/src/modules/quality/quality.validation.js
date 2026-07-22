@@ -65,6 +65,10 @@ const createCriterionSchema = Joi.object({
   isActive: Joi.boolean().default(true),
 });
 
+const updateInspectionStatusSchema = Joi.object({
+  status: Joi.string().valid('in_progress').required(),
+});
+
 const updateCriterionSchema = Joi.object({
   name: Joi.string().max(255),
   description: Joi.string().allow(null, '').max(2000),
@@ -78,5 +82,6 @@ const updateCriterionSchema = Joi.object({
 module.exports = {
   createChecklistSchema, updateChecklistSchema,
   createInspectionSchema, recordResultSchema,
+  updateInspectionStatusSchema,
   createCriterionSchema, updateCriterionSchema,
 };

@@ -1095,11 +1095,16 @@ router.post('/orders',
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| CRUD | /api/quality/checklists | QC checklists |
-| POST | /api/quality/inspect | Create inspection |
-| GET | /api/quality/inspections/:id | Inspection result |
-| GET | /api/quality/inspections | Inspection history |
-| GET | /api/quality/reports/:itemId | Quality report by item |
+| GET, POST | /api/quality/checklists | List / create checklists |
+| GET, PATCH, DELETE | /api/quality/checklists/:id | Get / update / delete checklist |
+| GET, POST | /api/quality/inspections | List / create inspections |
+| GET, DELETE | /api/quality/inspections/:id | Get / delete inspection |
+| POST | /api/quality/inspections/:id/results | Record inspection results (passed/failed/blocked) |
+| PATCH | /api/quality/inspections/:id/status | Update inspection status (pending → in_progress) |
+| GET, POST | /api/quality/criteria | List / create criteria |
+| GET, PATCH, DELETE | /api/quality/criteria/:id | Get / update / delete criterion |
+| GET | /api/quality/references/:referenceType | Reference items for dropdown (PO item, WO output, SO item) |
+| GET | /api/quality/reports/:referenceType/:referenceId | Quality report by reference |
 
 ### 7.7 Shipping & Logistics
 

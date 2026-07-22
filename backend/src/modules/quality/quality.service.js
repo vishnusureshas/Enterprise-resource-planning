@@ -54,6 +54,15 @@ class QualityService {
     return repo.saveResults(id, organizationId, data, userId);
   }
 
+  async updateInspectionStatus(id, organizationId, status, userId) {
+    const inspection = await repo.findInspectionById(id, organizationId);
+    if (!inspection) throw new NotFoundError('Inspection not found');
+    if (inspection.status !== 'pending') {
+      throw new BadRequestError(`Cannot start inspection with status '${inspection.status}'`);
+    }
+    return repo.updateInspectionStatus(id, organizationId, status, userId);
+  }
+
   async deleteInspection(id, organizationId, userId) {
     const result = await repo.deleteInspection(id, organizationId, userId);
     if (!result) throw new NotFoundError('Inspection not found');

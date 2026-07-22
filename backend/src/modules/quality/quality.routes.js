@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {
   listChecklists, getChecklist, createChecklist, updateChecklist, deleteChecklist,
-  listInspections, getInspection, createInspection, recordResults, deleteInspection,
+  listInspections, getInspection, createInspection, recordResults, updateInspectionStatus, deleteInspection,
   listCriteria, getCriterion, createCriterion, updateCriterion, deleteCriterion,
   listReferenceItems,
   getInspectionReport,
@@ -15,7 +15,7 @@ const { auditLog } = require('../../middleware/auditLog');
 const { validate } = require('../../middleware/validate');
 const {
   createChecklistSchema, updateChecklistSchema,
-  createInspectionSchema, recordResultSchema,
+  createInspectionSchema, recordResultSchema, updateInspectionStatusSchema,
   createCriterionSchema, updateCriterionSchema,
 } = require('./quality.validation');
 
@@ -33,6 +33,7 @@ router.get('/inspections', authorize('quality:read'), listInspections);
 router.get('/inspections/:id', authorize('quality:read'), getInspection);
 router.post('/inspections', authorize('quality:create'), validate(createInspectionSchema), auditLog('quality.inspection.create', { auditableType: 'quality_inspection' }), createInspection);
 router.post('/inspections/:id/results', authorize('quality:update'), validate(recordResultSchema), auditLog('quality.inspection.record', { auditableType: 'quality_inspection', auditableId: (req) => req.params.id }), recordResults);
+router.patch('/inspections/:id/status', authorize('quality:update'), validate(updateInspectionStatusSchema), auditLog('quality.inspection.status', { auditableType: 'quality_inspection', auditableId: (req) => req.params.id }), updateInspectionStatus);
 router.delete('/inspections/:id', authorize('quality:delete'), auditLog('quality.inspection.delete', { auditableType: 'quality_inspection', auditableId: (req) => req.params.id }), deleteInspection);
 
 // Criteria
