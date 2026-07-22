@@ -51,7 +51,7 @@ class QualityService {
     if (inspection.status !== 'in_progress' && inspection.status !== 'pending') {
       throw new BadRequestError(`Cannot record results for inspection with status '${inspection.status}'`);
     }
-    return repo.saveResults(id, data, userId);
+    return repo.saveResults(id, organizationId, data, userId);
   }
 
   async deleteInspection(id, organizationId, userId) {

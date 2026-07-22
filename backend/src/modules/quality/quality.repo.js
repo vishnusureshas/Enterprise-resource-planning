@@ -257,12 +257,12 @@ class QualityRepository {
     return result.rows[0] || null;
   }
 
-  async saveResults(inspectionId, data, userId) {
+  async saveResults(inspectionId, organizationId, data, userId) {
     await db.query(
       `UPDATE quality_inspections SET status = $1, result_summary = $2, notes = CASE WHEN $3 IS NOT NULL THEN $3 ELSE notes END,
        inspected_by = $4, inspection_date = NOW(), updated_at = NOW()
-       WHERE id = $5`,
-      [data.status, data.resultSummary, data.notes || null, userId, inspectionId]
+       WHERE id = $5 AND organization_id = $6`,
+      [data.status, data.resultSummary, data.notes || null, userId, inspectionId, organizationId]
     );
 
     for (const result of data.results) {
@@ -275,7 +275,7 @@ class QualityRepository {
       );
     }
 
-    return this.findInspectionById(inspectionId, userId);
+    return this.findInspectionById(inspectionId, organizationId);
   }
 
   async deleteInspection(id, organizationId, userId) {
