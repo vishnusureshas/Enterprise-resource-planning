@@ -308,7 +308,7 @@ export default function InspectionDetailPage() {
             </CardContent>
           </Card>
 
-          {isEditable && (
+          {isEditable && checklistItems.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Record Results</CardTitle>
@@ -321,7 +321,6 @@ export default function InspectionDetailPage() {
                     value={finalStatus}
                     onChange={(e) => setFinalStatus(e.target.value)}
                   >
-                    <option value="in_progress">In Progress</option>
                     <option value="passed">Passed</option>
                     <option value="failed">Failed</option>
                     <option value="blocked">Blocked</option>
