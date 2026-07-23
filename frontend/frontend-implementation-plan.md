@@ -428,7 +428,48 @@ Frontend pages:
   components/criterion-form-modal.tsx → Create/edit criterion
 ```
 
-### Phase 9+: Remaining modules
+### Phase 9: Shipping & Logistics (Backend ✅ — Frontend pending)
+```
+Backend: ✅ 4 new DB tables (carriers, shipments, shipment_items, shipment_tracking_events)
+         ✅ 2 ENUM types (carrier_status, shipment_status)
+         ✅ 15 API endpoints
+         ✅ Carriers CRUD with search + pagination
+         ✅ Shipments CRUD with auto-numbering (SHP-000001)
+         ✅ Dispatch / deliver status transitions with tracking events
+         ✅ Tracking by carrier tracking number
+         ✅ Rate calculation stub (carrier API integration later)
+         ✅ 4 permissions: shipping:read, create, update, delete
+         ✅ Permissions seeded in migration
+         ✅ Registered at /api/shipping
+         ✅ Cache middleware (GET routes) + audit logging (mutations)
+
+Frontend: Pending — frontend implementation not started
+
+Endpoints:
+  Carriers:
+    GET/POST        /api/shipping/carriers
+    GET/PATCH/DELETE /api/shipping/carriers/:id
+  Shipments:
+    GET/POST        /api/shipping/shipments
+    GET/PATCH/DELETE /api/shipping/shipments/:id
+    POST            /api/shipping/shipments/:id/dispatch
+    POST            /api/shipping/shipments/:id/deliver
+    POST            /api/shipping/shipments/:id/tracking
+  Tracking:
+    GET             /api/shipping/tracking/:trackingNumber
+  Rates:
+    POST            /api/shipping/rates
+
+Tables:
+  carriers                    (shipping service providers, org-scoped)
+  shipments                   (outgoing shipments linked to sales orders)
+  shipment_items              (line items within a shipment)
+  shipment_tracking_events    (status history timeline)
+
+Status: draft → pending → dispatched → in_transit → delivered | failed | returned
+```
+
+### Phase 10+: Remaining modules
 ```
 Each module follows the same pattern:
   ListPage → DataTable + Search + Pagination
@@ -437,7 +478,6 @@ Each module follows the same pattern:
   Delete → ConfirmDialog → DELETE
 
 Backend modules pending (in order):
-  Shipping & Logistics          → Phase 9
   RMA / Returns                 → Phase 10
   Finance & Accounting          → Phase 11
   Tax Management                → Phase 12
@@ -463,9 +503,9 @@ Backend modules pending (in order):
 | Vite + React Router v6 | Next.js 15 App Router |
 | `AppLayout.tsx`, `Header.tsx`, `Sidebar.tsx` | Next.js route group `(dashboard)/layout.tsx` + `sidebar.tsx`, `header.tsx` |
 | `PageContainer.tsx` | Inline page structure (h2 + p + Card) |
-| `FormModal.tsx` | Not built yet |
+| `FormModal.tsx` | ✅ Built: `src/components/shared/form-modal.tsx` |
 | `StatusBadge.tsx` | Inline `<Badge>` usage |
-| `FileUpload.tsx` | Not built yet |
+| `FileUpload.tsx` | ✅ Built: `src/components/shared/file-upload.tsx` |
 | `auth.api.ts` in `modules/auth/` | ✅ Created |
 | `AuthStore.setAuth(data: LoginResponse)` | `setAuth(user, accessToken, refreshToken)` — 3 separate args |
 | React Query for auth | ✅ Added loginMutation, registerMutation, logoutMutation, currentUserQuery |
@@ -483,6 +523,10 @@ Backend modules pending (in order):
 | Manufacturing frontend | ✅ Phase 7 frontend built: 8 pages, 2 modals, 18 API functions |
 | Quality Control backend | ✅ Phase 8 backend completed: 5 DB tables, 16 API endpoints, polymorphic inspections |
 | Quality Control frontend | ✅ Phase 8 frontend completed: 7 pages, 2 modals, 18 API functions |
+| Cache middleware wired into routes | ✅ Added cacheAside() to all GET routes across 12 modules (120-300s TTL) |
+| Background workers activated | ✅ BullMQ Workers created for 5 queues (invoice, email, report, stockAlert, dataSync) + wired into server.js |
+| Auth refresh crash fixed | ✅ Controller now decodes JWT from Authorization header instead of depending on req.user |
+| Shipping & Logistics backend | ✅ Phase 9 backend completed: 4 DB tables, 15 API endpoints, auto-numbering, status transitions |
 
 ## 5. Route Definitions (Next.js App Router)
 
@@ -613,6 +657,7 @@ start: Next.js scaffold
   ├── Manufacturing pages + API       ← Phase 7 (complete)
   ├── Quality Control backend         ← Phase 8 (complete)
   └── Quality Control frontend        ← Phase 8 (complete)
+  └── Shipping & Logistics backend    ← Phase 9 (complete)
 ```
 
 ## 8. File Count (Current)
@@ -626,7 +671,7 @@ start: Next.js scaffold
 | types (api, auth, user, role) | 4 |
 | components/ui (shadcn primitives) | 16 |
 | components/layout (sidebar, header) | 2 |
-| components/shared (DataTable, ConfirmDialog, SearchInput, LoadingSpinner, EmptyState) | 5 |
+| components/shared (DataTable, ConfirmDialog, SearchInput, LoadingSpinner, EmptyState, FormModal, FileUpload) | 7 |
 | components/guards (ProtectedRoute, PermissionGate) | 2 |
 | hooks (useAuth, usePermissions, useDebounce) | 3 |
 | modules/auth (auth.api.ts) | 1 |
@@ -642,15 +687,15 @@ start: Next.js scaffold
 | public (favicon, logo) | 2 |
 | env (.dev, .prod) | 2 |
 | middleware.ts | 1 |
-| **Total** | **~95 files** |
+| **Total** | **~97 files** |
 
 ---
 
 ## 9. Known Issues (Pre-existing)
 
-| Issue | Location | Symptom | Root Cause |
-|-------|----------|---------|------------|
-| `/orders` page crashes on load | `frontend/src/app/(dashboard)/orders/page.tsx` | Internal Server Error (500) at runtime | Likely Next.js SSR crash — component tries to access browser-only API (`localStorage`, `window`) or a module fails to load during server render |
-| Auth refresh endpoint crashes | `backend/src/modules/auth/auth.controller.js:35` | `Cannot read properties of undefined (reading 'id')` on `POST /api/auth/refresh` | The refresh handler expects `req.user.id` but `req.user` is `undefined` when the refresh token middleware doesn't populate it |
+| Issue | Location | Symptom | Root Cause | Status |
+|-------|----------|---------|------------|--------|
+| `/orders` page crashes on load | (path was restructured) | Internal Server Error (500) at runtime | Route group `(dashboard)` was removed — file moved to `/orders/page.tsx`. Component is `"use client"`, all imports valid. | ✅ Resolved by route restructure |
+| Auth refresh endpoint crashes | `backend/src/modules/auth/auth.controller.js:35` | `Cannot read properties of undefined (reading 'id')` on `POST /api/auth/refresh` | The refresh handler expects `req.user.id` but `req.user` is `undefined` when the refresh token middleware doesn't populate it | ✅ Fixed — controller now decodes JWT from Authorization header |
 
 *This plan aligns with backend phases 1–8 at `d:\ERP\backend\erp-workflow-plan.md` and maps directly to the API endpoints, data models, and auth flows already built.*
