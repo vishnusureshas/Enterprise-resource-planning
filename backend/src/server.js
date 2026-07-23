@@ -41,7 +41,9 @@ async function init() {
     logger.info(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
   });
 
-  await startWorkers();
+  await startWorkers().catch((err) => {
+    logger.warn({ err: err.message }, 'Background workers failed to start, continuing without them');
+  });
 }
 
 init().catch((err) => {

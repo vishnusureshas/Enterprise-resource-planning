@@ -1,5 +1,5 @@
 const { Worker } = require('bullmq');
-const { redisQueue } = require('../config/redis');
+const env = require('../config/env');
 const logger = require('../config/logger');
 
 const { processInvoice } = require('./invoice.worker');
@@ -10,9 +10,26 @@ const { syncData } = require('./dataSync.worker');
 
 const workers = [];
 
+function getRedisConnection() {
+  if (env.redis.url) {
+    return { url: env.redis.url };
+  }
+  return {
+    host: env.redis.host,
+    port: env.redis.port,
+    password: env.redis.password || undefined,
+  };
+}
+
 async function startWorkers() {
+  const redisConf = env.redis;
+  if (!redisConf.url && (!redisConf.host || redisConf.host === 'localhost' || redisConf.host === '127.0.0.1')) {
+    logger.warn('No real Redis configured, skipping background workers');
+    return;
+  }
+
   const connection = {
-    connection: redisQueue,
+    connection: getRedisConnection(),
     concurrency: 5,
     limiter: { max: 100, duration: 1000 },
   };
