@@ -12,13 +12,13 @@ import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { toast } from "@/components/ui/use-toast";
 import {
-  getPurchaseOrder, updatePurchaseOrderStatus, receiveGoods,
+  getPurchaseOrder, updatePurchaseOrderStatus, receiveGoods, returnPurchaseOrder,
   getPoStatusLabel, getPoStatusColor,
   type PurchaseOrder, type PoStatus, type PurchaseOrderItem,
 } from "@/modules/procurement/purchase-order.api";
 import { CACHE_KEYS, ROUTES } from "@/lib/constants";
 import {
-  ArrowLeft, Truck, DollarSign, Package, Clock,
+  ArrowLeft, Truck, DollarSign, Package, Clock, Undo2,
 } from "lucide-react";
 
 const STATUS_TRANSITIONS: Record<string, PoStatus[]> = {
@@ -39,6 +39,9 @@ export default function PurchaseOrderDetailPage() {
   const [showReceive, setShowReceive] = useState(false);
   const [receiptNotes, setReceiptNotes] = useState("");
   const [receiveQtys, setReceiveQtys] = useState<Record<string, string>>({});
+  const [showReturn, setShowReturn] = useState(false);
+  const [returnNotes, setReturnNotes] = useState("");
+  const [returnQtys, setReturnQtys] = useState<Record<string, string>>({});
 
   const { data: po, isLoading } = useQuery({
     queryKey: CACHE_KEYS.PURCHASE_ORDER(id),
@@ -78,6 +81,33 @@ export default function PurchaseOrderDetailPage() {
       setReceiveQtys({});
     },
     onError: () => toast({ title: "Failed to receive goods", variant: "destructive" }),
+  });
+
+  const returnMutation = useMutation({
+    mutationFn: () => {
+      const items = (po?.items || [])
+        .filter((item) => {
+          const qty = parseFloat(returnQtys[item.id] || "0");
+          return qty > 0;
+        })
+        .map((item) => ({
+          purchaseOrderItemId: item.id,
+          productId: item.product_id,
+          quantity: parseFloat(returnQtys[item.id] || "0"),
+          reason: "Defective",
+        }));
+      if (items.length === 0) throw new Error("No items selected for return");
+      return returnPurchaseOrder(id, { notes: returnNotes || null, items });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.PURCHASE_ORDER(id) });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.PURCHASE_ORDERS });
+      toast({ title: "Return processed", variant: "success" });
+      setShowReturn(false);
+      setReturnNotes("");
+      setReturnQtys({});
+    },
+    onError: (err: Error) => toast({ title: "Failed to process return", description: err.message, variant: "destructive" }),
   });
 
   if (isLoading) return <LoadingSpinner />;
@@ -131,6 +161,12 @@ export default function PurchaseOrderDetailPage() {
         </Button>
       )}
 
+      {(po.status === "partial" || po.status === "received") && (
+        <Button variant="outline" size="sm" onClick={() => setShowReturn(!showReturn)}>
+          <Undo2 className="mr-1 h-4 w-4" /> Return to Vendor
+        </Button>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -151,6 +187,21 @@ export default function PurchaseOrderDetailPage() {
                   <Button size="sm" disabled={receiveMutation.isPending}
                     onClick={() => receiveMutation.mutate()}>
                     {receiveMutation.isPending ? "Receiving..." : "Confirm Receipt"}
+                  </Button>
+                </div>
+              )}
+
+              {showReturn && po.items && po.items.length > 0 && (
+                <div className="mb-4 rounded-lg border p-3 bg-destructive/10 space-y-3">
+                  <p className="text-sm font-medium text-destructive">Enter quantities to return</p>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Notes</Label>
+                    <Input className="h-8 text-xs" placeholder="Return reason..." value={returnNotes}
+                      onChange={(e) => setReturnNotes(e.target.value)} />
+                  </div>
+                  <Button size="sm" variant="destructive" disabled={returnMutation.isPending}
+                    onClick={() => returnMutation.mutate()}>
+                    {returnMutation.isPending ? "Processing..." : "Confirm Return"}
                   </Button>
                 </div>
               )}
@@ -185,6 +236,13 @@ export default function PurchaseOrderDetailPage() {
                               placeholder={`0 / ${remaining}`}
                               value={receiveQtys[item.id] || ""}
                               onChange={(e) => setReceiveQtys({ ...receiveQtys, [item.id]: e.target.value })}
+                            />
+                          ) : showReturn && item.received_quantity > 0 ? (
+                            <Input type="number" min={0} max={item.received_quantity} step={0.0001}
+                              className="h-7 w-full text-xs border-destructive"
+                              placeholder={`0 / ${item.received_quantity}`}
+                              value={returnQtys[item.id] || ""}
+                              onChange={(e) => setReturnQtys({ ...returnQtys, [item.id]: e.target.value })}
                             />
                           ) : (
                             <span>{item.received_quantity} / {item.quantity}</span>

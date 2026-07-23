@@ -167,6 +167,22 @@ export async function getReceipt(id: string, receiptId: string): Promise<GoodsRe
   return response.data.data;
 }
 
+export interface ReturnToVendorPayload {
+  returnDate?: string;
+  notes?: string | null;
+  items: {
+    purchaseOrderItemId: string;
+    productId: string;
+    quantity: number;
+    reason?: string;
+  }[];
+}
+
+export async function returnPurchaseOrder(id: string, data: ReturnToVendorPayload): Promise<GoodsReceipt> {
+  const response = await api.post<ApiResponse<GoodsReceipt>>(`/purchase-orders/${id}/return`, data);
+  return response.data.data;
+}
+
 export async function getPurchaseOrderTimeline(id: string): Promise<{ event: string; date: string }[]> {
   const response = await api.get<ApiResponse<{ event: string; date: string }[]>>(`/purchase-orders/${id}/timeline`);
   return response.data.data;

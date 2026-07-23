@@ -203,3 +203,20 @@ export async function createCustomerNote(customerId: string, data: CreateNotePay
   const response = await api.post<ApiResponse<CustomerNote>>(`/customers/${customerId}/notes`, data);
   return response.data.data;
 }
+
+export interface CustomerOrder {
+  id: string;
+  order_number: string;
+  order_date: string;
+  status: string;
+  grand_total: number;
+  paid_amount?: number;
+  balance_due?: number;
+  currency_code: string;
+  created_at: string;
+}
+
+export async function listCustomerOrders(customerId: string, params: PaginationParams): Promise<{ data: CustomerOrder[]; meta: PaginationMeta }> {
+  const response = await api.get<ApiResponse<CustomerOrder[]>>(`/customers/${customerId}/orders`, { params });
+  return { data: response.data.data, meta: response.data.meta! };
+}

@@ -16,17 +16,18 @@ import {
   getCustomer, deleteCustomer, listCustomerAddresses, createCustomerAddress,
   updateCustomerAddress, deleteCustomerAddress, listCustomerContacts,
   createCustomerContact, updateCustomerContact, deleteCustomerContact,
-  listCustomerNotes, createCustomerNote,
+  listCustomerNotes, createCustomerNote, listCustomerOrders,
 } from "@/modules/customer/customer.api";
+import type { CustomerAddress, CustomerContact, CustomerNote, CustomerOrder, CreateAddressPayload, CreateContactPayload, UpdateAddressPayload, UpdateContactPayload } from "@/modules/customer/customer.api";
+import { getOrderStatusColor, getOrderStatusLabel } from "@/modules/order/order.api";
 import { CustomerFormModal } from "@/modules/customer/components/customer-form-modal";
 import { CACHE_KEYS, ROUTES } from "@/lib/constants";
 import {
   ArrowLeft, Pencil, Trash2, Mail, Phone, Building2, Globe,
   MapPin, UserPlus, Plus, StickyNote,
 } from "lucide-react";
-import type { CustomerAddress, CustomerContact, CustomerNote, CreateAddressPayload, CreateContactPayload, UpdateAddressPayload, UpdateContactPayload } from "@/modules/customer/customer.api";
 
-type Tab = "details" | "addresses" | "contacts" | "notes";
+type Tab = "details" | "addresses" | "contacts" | "notes" | "orders";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -60,6 +61,12 @@ export default function CustomerDetailPage() {
     enabled: activeTab === "notes",
   });
 
+  const { data: ordersData } = useQuery({
+    queryKey: CACHE_KEYS.CUSTOMER_ORDERS(id),
+    queryFn: () => listCustomerOrders(id, { page: 1, limit: 20 }),
+    enabled: activeTab === "orders",
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => deleteCustomer(id),
     onSuccess: () => {
@@ -87,6 +94,7 @@ export default function CustomerDetailPage() {
     { key: "addresses", label: "Addresses" },
     { key: "contacts", label: "Contacts" },
     { key: "notes", label: "Notes" },
+    { key: "orders", label: "Orders" },
   ];
 
   return (
@@ -178,6 +186,9 @@ export default function CustomerDetailPage() {
       {activeTab === "notes" && (
         <NotesTab customerId={id} notes={notes || []} onAdd={createNoteMutation.mutate} />
       )}
+
+      {/* Orders Tab */}
+      {activeTab === "orders" && <OrdersTab customerId={id} orders={ordersData?.data || []} router={router} />}
 
       <CustomerFormModal open={showEditModal} onOpenChange={setShowEditModal} customerId={id} />
 
@@ -473,6 +484,58 @@ function NotesTab({
                   {note.created_by_name && <span>{note.created_by_name} · </span>}
                   {new Date(note.created_at).toLocaleString()}
                 </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function OrdersTab({ customerId, orders, router }: { customerId: string; orders: CustomerOrder[]; router: any }) {
+  const navigateRouter = useRouter();
+  const r = router || navigateRouter;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium">Orders</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {orders.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No orders for this customer</p>
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
+              <div className="col-span-3">Order #</div>
+              <div className="col-span-2">Date</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-2 text-right">Total</div>
+              <div className="col-span-2 text-right">Balance</div>
+              <div className="col-span-1"></div>
+            </div>
+            {orders.map((order) => (
+              <div key={order.id} className="grid grid-cols-12 gap-2 text-sm py-2 border-b last:border-0 items-center">
+                <div className="col-span-3 font-medium">{order.order_number}</div>
+                <div className="col-span-2 text-muted-foreground">{new Date(order.order_date).toLocaleDateString()}</div>
+                <div className="col-span-2">
+                  <Badge variant={getOrderStatusColor(order.status)} className="text-xs">
+                    {getOrderStatusLabel(order.status)}
+                  </Badge>
+                </div>
+                <div className="col-span-2 text-right font-medium">${Number(order.grand_total).toFixed(2)}</div>
+                <div className="col-span-2 text-right">
+                  {Number(order.balance_due || 0) > 0 ? (
+                    <span className="text-destructive">${Number(order.balance_due).toFixed(2)}</span>
+                  ) : (
+                    <span className="text-green-600">Paid</span>
+                  )}
+                </div>
+                <div className="col-span-1 text-right">
+                  <Button variant="ghost" size="sm" onClick={() => r.push(ROUTES.ORDER_DETAIL(order.id))}>
+                    View
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

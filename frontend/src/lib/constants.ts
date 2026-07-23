@@ -152,6 +152,7 @@ export const CACHE_KEYS = {
   CUSTOMER_ADDRESSES: (id: string) => ["customers", id, "addresses"],
   CUSTOMER_CONTACTS: (id: string) => ["customers", id, "contacts"],
   CUSTOMER_NOTES: (id: string) => ["customers", id, "notes"],
+  CUSTOMER_ORDERS: (id: string) => ["customers", id, "orders"],
   ORDERS: ["orders"],
   ORDER: (id: string) => ["orders", id],
   ORDER_TIMELINE: (id: string) => ["orders", id, "timeline"],
