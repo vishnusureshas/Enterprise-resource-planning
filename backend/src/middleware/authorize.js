@@ -8,7 +8,8 @@ const authorize = (...permissions) => {
     }
 
     // Admin has all permissions
-    if (req.user.roles?.includes('admin') || req.user.isSuperAdmin) {
+    const isAdmin = req.user.roles?.some(r => r.toLowerCase() === 'admin');
+    if (isAdmin || req.user.isSuperAdmin) {
       return next();
     }
 

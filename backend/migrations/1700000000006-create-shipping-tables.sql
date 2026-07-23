@@ -94,7 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_shipment_tracking_shipment ON shipment_tracking_e
 CREATE INDEX IF NOT EXISTS idx_shipment_tracking_occurred ON shipment_tracking_events(shipment_id, occurred_at DESC);
 
 -- ─── Permissions ──────────────────────────────────────────────────────
-INSERT INTO permissions (name, description, module) VALUES
+INSERT INTO permissions (name, description, category) VALUES
     ('shipping:read', 'View carriers and shipments', 'shipping'),
     ('shipping:create', 'Create carriers and shipments', 'shipping'),
     ('shipping:update', 'Update carriers and shipments', 'shipping'),
