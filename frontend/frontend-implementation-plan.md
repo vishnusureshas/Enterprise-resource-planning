@@ -443,7 +443,16 @@ Backend: ✅ 4 new DB tables (carriers, shipments, shipment_items, shipment_trac
          ✅ Registered at /api/shipping
          ✅ Cache middleware (GET routes) + audit logging (mutations)
 
-Frontend: Pending — frontend implementation not started
+Frontend: ✅ 6 new files + 3 edited files
+          ✅ shipping.api.ts — 16 API functions + types + helpers
+          ✅ Layout with 3 tabs (Overview, Shipments, Carriers)
+          ✅ Overview page with KPI cards (total, in transit, pending)
+          ✅ Shipments list with search + status filter + pagination
+          ✅ Shipment detail with dispatch/deliver actions, tracking timeline
+          ✅ Shipment create form with line items + carrier/order selection
+          ✅ Carriers list with inline create/edit modal
+          ✅ CACHE_KEYS + ROUTES in constants.ts
+          ✅ Sidebar nav item (Truck icon)
 
 Endpoints:
   Carriers:
@@ -527,6 +536,7 @@ Backend modules pending (in order):
 | Background workers activated | ✅ BullMQ Workers created for 5 queues (invoice, email, report, stockAlert, dataSync) + wired into server.js |
 | Auth refresh crash fixed | ✅ Controller now decodes JWT from Authorization header instead of depending on req.user |
 | Shipping & Logistics backend | ✅ Phase 9 backend completed: 4 DB tables, 15 API endpoints, auto-numbering, status transitions |
+| Shipping & Logistics frontend | ✅ Phase 9 frontend completed: 6 pages, 8 API functions, carriers modal, tracking timeline |
 
 ## 5. Route Definitions (Next.js App Router)
 
@@ -658,6 +668,7 @@ start: Next.js scaffold
   ├── Quality Control backend         ← Phase 8 (complete)
   └── Quality Control frontend        ← Phase 8 (complete)
   └── Shipping & Logistics backend    ← Phase 9 (complete)
+  └── Shipping & Logistics frontend   ← Phase 9 (complete)
 ```
 
 ## 8. File Count (Current)
