@@ -245,6 +245,44 @@ class PurchaseOrderRepository {
       { event: 'Purchase order created', date: null },
     ];
   }
+
+  async returnToVendor(purchaseOrderId, returnItems, data, userId) {
+    const client = await db.getClient();
+    try {
+      await client.query('BEGIN');
+
+      const returnResult = await client.query(
+        `INSERT INTO goods_receipts (purchase_order_id, receipt_number, received_date, notes, created_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+         RETURNING *`,
+        [purchaseOrderId, data.returnNumber, data.returnDate, `RETURN: ${data.notes || ''}`, userId]
+      );
+      const ret = returnResult.rows[0];
+
+      for (const ri of returnItems) {
+        await client.query(
+          `INSERT INTO goods_receipt_items (goods_receipt_id, purchase_order_item_id, product_id, quantity, created_at)
+           VALUES ($1, $2, $3, $4, NOW())`,
+          [ret.id, ri.purchaseOrderItemId, ri.productId, -ri.quantity]
+        );
+
+        await client.query(
+          `UPDATE purchase_order_items
+           SET received_quantity = received_quantity - $1
+           WHERE id = $2`,
+          [ri.quantity, ri.purchaseOrderItemId]
+        );
+      }
+
+      await client.query('COMMIT');
+      return ret;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 module.exports = new PurchaseOrderRepository();

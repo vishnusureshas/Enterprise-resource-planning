@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  list, get, create, updateStatus, receiveGoods, getReceipt, getTimeline,
+  list, get, create, updateStatus, receiveGoods, getReceipt, getTimeline, returnToVendor,
 } = require('./purchase-order.controller');
 
 const { authenticate } = require('../../middleware/auth');
@@ -18,5 +18,6 @@ router.patch('/:id/status', authorize('procurement:approve'), auditLog('purchase
 router.post('/:id/receive', authorize('procurement:receive'), auditLog('purchase_order.receive', { auditableType: 'purchase_order', auditableId: (req) => req.params.id }), receiveGoods);
 router.get('/:id/receipts/:receiptId', authorize('procurement:read'), getReceipt);
 router.get('/:id/timeline', authorize('procurement:read'), getTimeline);
+router.post('/:id/return', authorize('procurement:create'), auditLog('purchase_order.return', { auditableType: 'purchase_order', auditableId: (req) => req.params.id }), returnToVendor);
 
 module.exports = router;

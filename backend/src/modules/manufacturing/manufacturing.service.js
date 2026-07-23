@@ -1,6 +1,8 @@
 const repo = require('./manufacturing.repo');
 const { BadRequestError, NotFoundError, ConflictError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class ManufacturingService {
   // ─── Work Centers ───────────────────────────────────────────────────
@@ -136,6 +138,10 @@ class ManufacturingService {
     if (data.warehouseStockId) {
       await repo.deductStock(data.warehouseStockId, data.quantityActual);
     }
+    await invalidateCache([
+      keys.inventory.lowStock(organizationId),
+      keys.dashboard.kpi(organizationId, 'manufacturing'),
+    ]);
     return consumption;
   }
 
@@ -152,6 +158,10 @@ class ManufacturingService {
     if (data.warehouseStockId && !data.isDefective) {
       await repo.addStock(data.warehouseStockId, data.quantity);
     }
+    await invalidateCache([
+      keys.inventory.lowStock(organizationId),
+      keys.dashboard.kpi(organizationId, 'manufacturing'),
+    ]);
     return output;
   }
 }

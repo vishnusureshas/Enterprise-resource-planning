@@ -1,6 +1,8 @@
 const vendorRepo = require('./vendor.repo');
 const { BadRequestError, NotFoundError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class VendorService {
   async list(organizationId, query) {
@@ -34,6 +36,7 @@ class VendorService {
     }
 
     const vendor = await vendorRepo.create(data, organizationId);
+    await invalidateCache([keys.vendor.item(organizationId, vendor.id)]);
     logger.info('Vendor created', { vendorId: vendor.id, code: vendor.code, organizationId });
     return vendor;
   }
@@ -53,6 +56,7 @@ class VendorService {
     }
 
     const vendor = await vendorRepo.update(id, organizationId, data);
+    await invalidateCache([keys.vendor.item(organizationId, id)]);
     logger.info('Vendor updated', { vendorId: id, organizationId });
     return vendor;
   }
@@ -61,6 +65,7 @@ class VendorService {
     const existing = await vendorRepo.findById(id, organizationId);
     if (!existing) throw new NotFoundError('Vendor not found');
     await vendorRepo.delete(id, organizationId);
+    await invalidateCache([keys.vendor.item(organizationId, id)]);
     logger.info('Vendor deleted', { vendorId: id, organizationId });
   }
 
@@ -105,15 +110,15 @@ class VendorService {
   async updateContract(vendorId, contractId, organizationId, data) {
     const vendor = await vendorRepo.findById(vendorId, organizationId);
     if (!vendor) throw new NotFoundError('Vendor not found');
-    const existing = await vendorRepo.findContractById(contactId, vendorId);
+    const existing = await vendorRepo.findContractById(contractId, vendorId);
     if (!existing) throw new NotFoundError('Contract not found');
-    return vendorRepo.updateContract(contactId, vendorId, data);
+    return vendorRepo.updateContract(contractId, vendorId, data);
   }
 
   async deleteContract(vendorId, contractId, organizationId) {
     const vendor = await vendorRepo.findById(vendorId, organizationId);
     if (!vendor) throw new NotFoundError('Vendor not found');
-    await vendorRepo.deleteContract(contactId, vendorId);
+    await vendorRepo.deleteContract(contractId, vendorId);
   }
 
   async listPurchaseOrders(vendorId, organizationId, query) {

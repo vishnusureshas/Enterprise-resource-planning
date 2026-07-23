@@ -1,6 +1,8 @@
 const inventoryRepo = require('./inventory.repo');
 const { BadRequestError, NotFoundError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class InventoryService {
   // ─── Categories ───────────────────────────────────────────────────
@@ -37,6 +39,7 @@ class InventoryService {
     }
 
     const category = await inventoryRepo.createCategory(data, organizationId);
+    await invalidateCache([keys.inventory.categories(organizationId)]);
     logger.info('Category created', { categoryId: category.id, organizationId });
     return category;
   }
@@ -55,6 +58,10 @@ class InventoryService {
     }
 
     const category = await inventoryRepo.updateCategory(id, organizationId, data);
+    await invalidateCache([
+      keys.inventory.category(organizationId, data.slug || category.slug),
+      keys.inventory.categories(organizationId),
+    ]);
     logger.info('Category updated', { categoryId: id, organizationId });
     return category;
   }
@@ -63,6 +70,10 @@ class InventoryService {
     const existing = await inventoryRepo.findCategoryById(id, organizationId);
     if (!existing) throw new NotFoundError('Category not found');
     await inventoryRepo.deleteCategory(id, organizationId);
+    await invalidateCache([
+      keys.inventory.category(organizationId, existing.slug),
+      keys.inventory.categories(organizationId),
+    ]);
     logger.info('Category deleted', { categoryId: id, organizationId });
     return { success: true };
   }
@@ -106,6 +117,7 @@ class InventoryService {
     }
 
     const product = await inventoryRepo.createProduct(data, organizationId);
+    await invalidateCache([keys.inventory.items(organizationId, '*')]);
     logger.info('Product created', { productId: product.id, sku: product.sku, organizationId });
     return product;
   }
@@ -125,6 +137,10 @@ class InventoryService {
     }
 
     const product = await inventoryRepo.updateProduct(id, organizationId, data);
+    await invalidateCache([
+      keys.inventory.item(organizationId, id),
+      keys.inventory.items(organizationId, '*'),
+    ]);
     logger.info('Product updated', { productId: id, organizationId });
     return product;
   }
@@ -133,6 +149,10 @@ class InventoryService {
     const existing = await inventoryRepo.findProductById(id, organizationId);
     if (!existing) throw new NotFoundError('Product not found');
     await inventoryRepo.deleteProduct(id, organizationId);
+    await invalidateCache([
+      keys.inventory.item(organizationId, id),
+      keys.inventory.items(organizationId, '*'),
+    ]);
     logger.info('Product deleted', { productId: id, organizationId });
     return { success: true };
   }
@@ -153,6 +173,7 @@ class InventoryService {
     if (existing) throw new BadRequestError('Variant SKU already exists for this product');
 
     const variant = await inventoryRepo.createVariant(productId, data);
+    await invalidateCache([keys.inventory.item(organizationId, productId)]);
     logger.info('Variant created', { variantId: variant.id, productId, organizationId });
     return variant;
   }
@@ -170,6 +191,7 @@ class InventoryService {
     }
 
     const variant = await inventoryRepo.updateVariant(variantId, data);
+    await invalidateCache([keys.inventory.item(organizationId, productId)]);
     logger.info('Variant updated', { variantId, productId, organizationId });
     return variant;
   }
@@ -182,6 +204,7 @@ class InventoryService {
     if (!existing) throw new NotFoundError('Variant not found');
 
     await inventoryRepo.deleteVariant(variantId);
+    await invalidateCache([keys.inventory.item(organizationId, productId)]);
     logger.info('Variant deleted', { variantId, productId, organizationId });
     return { success: true };
   }
@@ -222,6 +245,7 @@ class InventoryService {
     }
 
     const warehouse = await inventoryRepo.createWarehouse(data, organizationId);
+    await invalidateCache([keys.warehouse.list(organizationId)]);
     logger.info('Warehouse created', { warehouseId: warehouse.id, organizationId });
     return warehouse;
   }
@@ -243,6 +267,10 @@ class InventoryService {
     }
 
     const warehouse = await inventoryRepo.updateWarehouse(id, organizationId, data);
+    await invalidateCache([
+      keys.warehouse.item(organizationId, id),
+      keys.warehouse.list(organizationId),
+    ]);
     logger.info('Warehouse updated', { warehouseId: id, organizationId });
     return warehouse;
   }
@@ -256,6 +284,10 @@ class InventoryService {
     }
 
     await inventoryRepo.deleteWarehouse(id, organizationId);
+    await invalidateCache([
+      keys.warehouse.item(organizationId, id),
+      keys.warehouse.list(organizationId),
+    ]);
     logger.info('Warehouse deleted', { warehouseId: id, organizationId });
     return { success: true };
   }
@@ -346,6 +378,11 @@ class InventoryService {
       );
 
       await client.query('COMMIT');
+      await invalidateCache([
+        keys.inventory.stock(organizationId, data.fromWarehouseId, data.productId),
+        keys.inventory.stock(organizationId, data.toWarehouseId, data.productId),
+        keys.inventory.lowStock(organizationId),
+      ]);
       logger.info('Stock transferred', { productId: data.productId, from: data.fromWarehouseId, to: data.toWarehouseId, quantity: data.quantity });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -380,6 +417,11 @@ class InventoryService {
       notes: `Adjustment: ${data.reason}. Before: ${currentQty}, After: ${data.newQuantity}`,
       createdBy: userId,
     });
+
+    await invalidateCache([
+      keys.inventory.stock(organizationId, data.warehouseId, data.productId),
+      keys.inventory.lowStock(organizationId),
+    ]);
 
     logger.info('Stock adjusted', {
       productId: data.productId, warehouseId: data.warehouseId,

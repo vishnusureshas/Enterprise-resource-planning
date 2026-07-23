@@ -59,6 +59,11 @@ const getTimeline = asyncHandler(async (req, res) => {
   res.json({ success: true, data: timeline, error: null });
 });
 
+const returnToVendor = asyncHandler(async (req, res) => {
+  const result = await poService.returnToVendor(req.params.id, req.user.organizationId, req.body, req.user.id);
+  res.json({ success: true, data: result, error: null });
+});
+
 module.exports = {
-  list, get, create, updateStatus, receiveGoods, getReceipt, getTimeline,
+  list, get, create, updateStatus, receiveGoods, getReceipt, getTimeline, returnToVendor,
 };

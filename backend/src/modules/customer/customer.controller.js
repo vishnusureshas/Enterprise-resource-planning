@@ -1,4 +1,5 @@
 const customerService = require('./customer.service');
+const orderService = require('../order/order.service');
 const { asyncHandler } = require('../../middleware/errorHandler');
 const { validate } = require('../../middleware/validate');
 const { paginate, buildPaginatedResponse } = require('../../middleware/pagination');
@@ -113,9 +114,17 @@ const createNote = [
   }),
 ];
 
+const listOrders = [
+  paginate,
+  asyncHandler(async (req, res) => {
+    const result = await orderService.listByCustomer(req.params.id, req.user.organizationId, req.pagination);
+    res.json(buildPaginatedResponse(result.data, result.total, req.pagination));
+  }),
+];
+
 module.exports = {
   list, get, create, update, remove,
   listAddresses, createAddress, updateAddress, deleteAddress,
   listContacts, createContact, updateContact, deleteContact,
-  listNotes, createNote,
+  listNotes, createNote, listOrders,
 };

@@ -3,6 +3,8 @@ const customerRepo = require('../customer/customer.repo');
 const inventoryRepo = require('../inventory/inventory.repo');
 const { BadRequestError, NotFoundError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class OrderService {
   generateOrderNumber(organizationId) {
@@ -96,6 +98,10 @@ class OrderService {
     };
 
     const order = await orderRepo.create(orderData, items, organizationId, userId);
+    await invalidateCache([
+      keys.dashboard.kpi(organizationId, 'orders'),
+      keys.dashboard.kpi(organizationId, 'revenue'),
+    ]);
     logger.info('Order created', { orderId: order.id, orderNumber, organizationId });
     return { ...order, items };
   }
@@ -120,6 +126,10 @@ class OrderService {
     }
 
     const order = await orderRepo.updateStatus(id, organizationId, status);
+    await invalidateCache([
+      keys.customer.item(organizationId, order.customer_id),
+      keys.dashboard.kpi(organizationId, 'orders'),
+    ]);
     logger.info('Order status updated', { orderId: id, from: existing.status, to: status, organizationId });
     return order;
   }
@@ -143,6 +153,10 @@ class OrderService {
 
     await orderRepo.updateField(id, organizationId, 'paid_amount', paidAmount);
     await orderRepo.updateField(id, organizationId, 'balance_due', parseFloat(order.grand_total) - paidAmount);
+
+    await invalidateCache([
+      keys.dashboard.kpi(organizationId, 'revenue'),
+    ]);
 
     logger.info('Payment recorded', { orderId: id, amount: data.amount, organizationId });
     return payment;

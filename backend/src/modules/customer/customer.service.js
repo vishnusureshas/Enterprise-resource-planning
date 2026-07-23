@@ -1,6 +1,8 @@
 const customerRepo = require('./customer.repo');
 const { BadRequestError, NotFoundError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class CustomerService {
   async list(organizationId, query) {
@@ -35,6 +37,7 @@ class CustomerService {
     }
 
     const customer = await customerRepo.create(data, organizationId);
+    await invalidateCache([keys.customer.item(organizationId, customer.id)]);
     logger.info('Customer created', { customerId: customer.id, code: customer.code, organizationId });
     return customer;
   }
@@ -54,6 +57,7 @@ class CustomerService {
     }
 
     const customer = await customerRepo.update(id, organizationId, data);
+    await invalidateCache([keys.customer.item(organizationId, id)]);
     logger.info('Customer updated', { customerId: id, organizationId });
     return customer;
   }
@@ -62,6 +66,7 @@ class CustomerService {
     const existing = await customerRepo.findById(id, organizationId);
     if (!existing) throw new NotFoundError('Customer not found');
     await customerRepo.delete(id, organizationId);
+    await invalidateCache([keys.customer.item(organizationId, id)]);
     logger.info('Customer deleted', { customerId: id, organizationId });
   }
 

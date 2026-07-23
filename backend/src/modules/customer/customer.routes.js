@@ -5,7 +5,7 @@ const {
   list, get, create, update, remove,
   listAddresses, createAddress, updateAddress, deleteAddress,
   listContacts, createContact, updateContact, deleteContact,
-  listNotes, createNote,
+  listNotes, createNote, listOrders,
 } = require('./customer.controller');
 
 const { authenticate } = require('../../middleware/auth');
@@ -32,5 +32,7 @@ router.delete('/:id/contacts/:contactId', authorize('customer:update'), auditLog
 
 router.get('/:id/notes', authorize('customer:read'), listNotes);
 router.post('/:id/notes', authorize('customer:update'), auditLog('customer.note.create', { auditableType: 'customer_note', auditableId: (req) => req.params.id }), createNote);
+
+router.get('/:id/orders', authorize('order:read'), listOrders);
 
 module.exports = router;

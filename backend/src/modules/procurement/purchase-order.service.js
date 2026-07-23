@@ -3,6 +3,8 @@ const vendorRepo = require('../vendor/vendor.repo');
 const inventoryRepo = require('../inventory/inventory.repo');
 const { BadRequestError, NotFoundError } = require('../../shared/errors');
 const logger = require('../../config/logger');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
 
 class PurchaseOrderService {
   generatePoNumber(organizationId) {
@@ -101,6 +103,9 @@ class PurchaseOrderService {
     };
 
     const po = await poRepo.create(orderData, items, organizationId, userId);
+    await invalidateCache([
+      keys.dashboard.kpi(organizationId, 'procurement'),
+    ]);
     logger.info('Purchase order created', { poId: po.id, poNumber, organizationId });
     return { ...po, items };
   }
@@ -125,6 +130,9 @@ class PurchaseOrderService {
     }
 
     const po = await poRepo.updateStatus(id, organizationId, status);
+    await invalidateCache([
+      keys.dashboard.kpi(organizationId, 'procurement'),
+    ]);
     logger.info('Purchase order status updated', { poId: id, from: existing.status, to: status, organizationId });
     return po;
   }
@@ -174,6 +182,11 @@ class PurchaseOrderService {
       await poRepo.updateStatus(id, organizationId, newStatus);
     }
 
+    await invalidateCache([
+      keys.inventory.lowStock(organizationId),
+      keys.dashboard.kpi(organizationId, 'procurement'),
+    ]);
+
     logger.info('Goods received', { poId: id, receiptId: receipt.id, organizationId });
     return receipt;
   }
@@ -190,6 +203,49 @@ class PurchaseOrderService {
     const po = await poRepo.findById(id, organizationId);
     if (!po) throw new NotFoundError('Purchase order not found');
     return poRepo.findTimeline(id, organizationId);
+  }
+
+  async returnToVendor(id, organizationId, data, userId) {
+    const po = await poRepo.findById(id, organizationId);
+    if (!po) throw new NotFoundError('Purchase order not found');
+    if (po.status === 'draft' || po.status === 'cancelled') {
+      throw new BadRequestError('Cannot return a draft or cancelled purchase order');
+    }
+
+    const returnNumber = `RET-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000) + 1000}`;
+
+    const poItems = await poRepo.findItemsByOrderId(id);
+    const returnItems = [];
+    for (const ri of (data.items || [])) {
+      const poItem = poItems.find(i => i.id === ri.purchaseOrderItemId);
+      if (!poItem) throw new NotFoundError(`Purchase order item not found: ${ri.purchaseOrderItemId}`);
+
+      const receivedQty = parseFloat(poItem.received_quantity);
+      if (ri.quantity > receivedQty) {
+        throw new BadRequestError(`Return quantity ${ri.quantity} exceeds received quantity ${receivedQty} for item ${poItem.product_name}`);
+      }
+
+      returnItems.push({
+        purchaseOrderItemId: ri.purchaseOrderItemId,
+        productId: ri.productId,
+        quantity: ri.quantity,
+        reason: ri.reason || 'Defective',
+      });
+    }
+
+    const result = await poRepo.returnToVendor(id, returnItems, {
+      returnNumber,
+      returnDate: data.returnDate || new Date(),
+      notes: data.notes || null,
+    }, userId);
+
+    await invalidateCache([
+      keys.inventory.lowStock(organizationId),
+      keys.dashboard.kpi(organizationId, 'procurement'),
+    ]);
+
+    logger.info('Return to vendor processed', { poId: id, returnNumber, organizationId });
+    return result;
   }
 }
 
