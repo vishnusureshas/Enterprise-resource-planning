@@ -5,10 +5,16 @@ class RoleRepository {
   async findAll(organizationId) {
     const result = await db.query(
       `SELECT r.id, r.name, r.description, r.created_at, r.updated_at,
-              COUNT(ur.user_id)::int as user_count
+              COUNT(DISTINCT ur.user_id)::int as user_count,
+              COALESCE(
+                json_agg(DISTINCT jsonb_build_object('id', p.id, 'name', p.name, 'category', p.category))
+                FILTER (WHERE p.id IS NOT NULL), '[]'
+              ) as permissions
        FROM roles r
-LEFT JOIN user_roles ur ON ur.role_id = r.id
-        WHERE r.organization_id = $1
+       LEFT JOIN user_roles ur ON ur.role_id = r.id
+       LEFT JOIN role_permissions rp ON rp.role_id = r.id
+       LEFT JOIN permissions p ON p.id = rp.permission_id
+       WHERE r.organization_id = $1
        GROUP BY r.id
        ORDER BY r.created_at DESC`,
       [organizationId]
@@ -45,7 +51,7 @@ LEFT JOIN user_roles ur ON ur.role_id = r.id
     const result = await db.query(
       `INSERT INTO roles (name, description, organization_id, created_at, updated_at)
        VALUES ($1, $2, $3, NOW(), NOW())
-       RETURNING id, name, description, created_at`,
+       RETURNING id, name, description, created_at, updated_at`,
       [data.name, data.description || '', organizationId]
     );
     return result.rows[0];

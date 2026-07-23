@@ -4,7 +4,7 @@ export interface UserListItem {
   firstName: string;
   lastName: string;
   phone?: string;
-  status: "active" | "inactive" | "pending" | "suspended";
+  status: string;
   roles: string[];
   lastLogin?: string;
   createdAt: string;

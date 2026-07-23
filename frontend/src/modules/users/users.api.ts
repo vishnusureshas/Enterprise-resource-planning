@@ -25,7 +25,7 @@ export interface UpdateUserPayload {
   lastName?: string;
   phone?: string | null;
   avatarUrl?: string | null;
-  status?: "active" | "inactive" | "suspended";
+  status?: "active" | "inactive" | "pending" | "suspended";
   roleIds?: string[];
 }
 

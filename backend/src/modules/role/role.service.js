@@ -9,6 +9,7 @@ class RoleService {
       id: r.id,
       name: r.name,
       description: r.description,
+      permissions: r.permissions || [],
       userCount: r.user_count,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
@@ -49,6 +50,7 @@ class RoleService {
       description: role.description,
       permissions,
       createdAt: role.created_at,
+      updatedAt: role.updated_at || role.created_at,
     };
   }
 

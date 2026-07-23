@@ -100,6 +100,7 @@ export function RoleFormModal({ open, onOpenChange, roleId }: RoleFormModalProps
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ROLES });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ROLE(roleId!) });
       toast({ title: "Role updated successfully", variant: "success" });
       onOpenChange(false);
     },

@@ -70,7 +70,7 @@ export default function UsersPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
-        const variant = status === "active" ? "success" as const : status === "inactive" ? "secondary" as const : "destructive" as const;
+        const variant = status === "active" ? "success" as const : status === "inactive" ? "secondary" as const : status === "pending" ? "warning" as const : "destructive" as const;
         return <Badge variant={variant}>{status}</Badge>;
       },
     },

@@ -53,7 +53,7 @@ class UserService {
       status: user.status,
       mfaEnabled: user.mfa_enabled,
       roles: Array.isArray(user.roles) ? user.roles.map(r => r.name || r) : [],
-      permissions: user.permissions,
+      permissions: Array.isArray(user.permissions) ? user.permissions.map(p => p.name || p) : [],
       organizationId: user.organization_id,
       createdAt: user.created_at,
       updatedAt: user.updated_at,

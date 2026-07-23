@@ -16,7 +16,7 @@ const schemas = {
     lastName: commonSchemas.name.optional(),
     phone: commonSchemas.phone.optional().allow(null),
     avatarUrl: Joi.string().uri().max(500).optional().allow(null),
-    status: Joi.string().valid('active', 'inactive', 'suspended').optional(),
+    status: Joi.string().valid('active', 'inactive', 'pending', 'suspended').optional(),
     roleIds: Joi.array().items(Joi.string().uuid()).min(1).optional(),
   }).min(1),
 

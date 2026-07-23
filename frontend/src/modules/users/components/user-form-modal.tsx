@@ -42,7 +42,7 @@ const updateUserSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(255).trim(),
   lastName: z.string().min(1, "Last name is required").max(255).trim(),
   phone: z.string().optional().or(z.literal("")),
-  status: z.enum(["active", "inactive", "suspended"]),
+  status: z.enum(["active", "inactive", "pending", "suspended"]),
   roleIds: z.array(z.string()).optional(),
 });
 
@@ -90,7 +90,7 @@ export function UserFormModal({ open, onOpenChange, userId }: UserFormModalProps
         firstName: existingUser.firstName,
         lastName: existingUser.lastName,
         phone: existingUser.phone || "",
-        status: existingUser.status === "pending" ? "active" : existingUser.status,
+        status: existingUser.status as UpdateFormData["status"],
         roleIds,
       });
     }
@@ -129,6 +129,7 @@ export function UserFormModal({ open, onOpenChange, userId }: UserFormModalProps
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.USER(userId!) });
       toast({ title: "User updated successfully", variant: "success" });
       onOpenChange(false);
     },
@@ -217,6 +218,7 @@ export function UserFormModal({ open, onOpenChange, userId }: UserFormModalProps
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
