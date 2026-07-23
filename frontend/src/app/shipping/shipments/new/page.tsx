@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { createShipment, listCarriers, type CreateShipmentPayload } from "@/modules/shipping/shipping.api";
 import { listOrders } from "@/modules/order/order.api";
+import { listProducts } from "@/modules/inventory/inventory.api";
 import { CACHE_KEYS, ROUTES } from "@/lib/constants";
 import { ArrowLeft, Plus, Trash2, Truck } from "lucide-react";
 
@@ -46,6 +47,11 @@ export default function NewShipmentPage() {
   const { data: ordersData } = useQuery({
     queryKey: [...CACHE_KEYS.ORDERS, { limit: 100 }],
     queryFn: () => listOrders({ limit: 100 }),
+  });
+
+  const { data: productsData } = useQuery({
+    queryKey: [...CACHE_KEYS.INVENTORY_ITEMS, { limit: 100 }],
+    queryFn: () => listProducts({ limit: 100 }),
   });
 
   const createMutation = useMutation({
@@ -160,9 +166,14 @@ export default function NewShipmentPage() {
               {items.map((item, i) => (
                 <div key={i} className="flex items-end gap-2">
                   <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Product ID</Label>
-                    <Input className="h-8 text-xs" value={item.productId}
-                      onChange={(e) => updateItem(i, "productId", e.target.value)} placeholder="Product UUID" />
+                    <Label className="text-xs">Product</Label>
+                    <select className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-xs"
+                      value={item.productId} onChange={(e) => updateItem(i, "productId", e.target.value)}>
+                      <option value="">Select product</option>
+                      {productsData?.data?.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="w-24 space-y-1">
                     <Label className="text-xs">Qty</Label>
