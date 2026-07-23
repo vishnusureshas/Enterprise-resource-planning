@@ -25,6 +25,7 @@ const vendorRoutes = require('./modules/vendor/vendor.routes');
 const purchaseOrderRoutes = require('./modules/procurement/purchase-order.routes');
 const manufacturingRoutes = require('./modules/manufacturing/manufacturing.routes');
 const qualityRoutes = require('./modules/quality/quality.routes');
+const shippingRoutes = require('./modules/shipping/shipping.routes');
 
 const app = express();
 
@@ -132,6 +133,7 @@ app.use(`${env.apiPrefix}/vendors`, vendorRoutes);
 app.use(`${env.apiPrefix}/purchase-orders`, purchaseOrderRoutes);
 app.use(`${env.apiPrefix}/manufacturing`, manufacturingRoutes);
 app.use(`${env.apiPrefix}/quality`, qualityRoutes);
+app.use(`${env.apiPrefix}/shipping`, shippingRoutes);
 
 if (env.sentry.dsn) {
   app.use(Sentry.Handlers.errorHandler());
