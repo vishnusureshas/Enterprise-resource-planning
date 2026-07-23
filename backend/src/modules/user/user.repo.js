@@ -91,7 +91,7 @@ class UserRepository {
     const result = await db.query(
       `INSERT INTO users (email, password_hash, first_name, last_name, phone, organization_id, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
-       RETURNING id, email, first_name, last_name, phone, status, mfa_enabled, created_at`,
+       RETURNING id, email, first_name, last_name, phone, status, mfa_enabled, created_at, updated_at`,
       [userData.email, userData.passwordHash, userData.firstName, userData.lastName, userData.phone || null, organizationId]
     );
     return result.rows[0];

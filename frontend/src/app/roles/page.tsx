@@ -86,7 +86,7 @@ export default function RolesPage() {
             variant="ghost"
             size="icon"
             onClick={() => setDeleteId(row.original.id)}
-            disabled={row.original.name === "admin"}
+            disabled={row.original.name.toLowerCase() === "admin"}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>

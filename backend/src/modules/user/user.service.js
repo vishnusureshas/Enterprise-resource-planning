@@ -93,7 +93,9 @@ class UserService {
       mfaEnabled: user.mfa_enabled,
       roles: roles.map(r => r.name || r),
       permissions,
+      organizationId,
       createdAt: user.created_at,
+      updatedAt: user.updated_at || user.created_at,
     };
   }
 

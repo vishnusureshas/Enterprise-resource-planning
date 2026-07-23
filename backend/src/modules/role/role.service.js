@@ -89,7 +89,7 @@ class RoleService {
     if (!existing) throw new NotFoundError('Role not found');
 
     // Prevent deleting admin role
-    if (existing.name === 'admin') {
+    if (existing.name.toLowerCase() === 'admin') {
       throw new BadRequestError('Cannot delete the admin role');
     }
 
