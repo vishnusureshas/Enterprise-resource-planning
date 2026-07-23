@@ -1,6 +1,9 @@
 const shippingRepo = require('./shipping.repo');
 const { redis } = require('../../config/redis');
 const { NotFoundError, BadRequestError } = require('../../shared/errors');
+const { invalidateCache } = require('../../middleware/cache');
+const { keys } = require('../../cache/cacheKeys');
+const logger = require('../../config/logger');
 
 class ShippingService {
   // ─── Carriers ─────────────────────────────────────────────────────
@@ -17,7 +20,9 @@ class ShippingService {
   async createCarrier(data, organizationId, userId) {
     const existing = await shippingRepo.findByCarrierCode(data.code, organizationId);
     if (existing) throw new BadRequestError('Carrier code already exists');
-    return shippingRepo.createCarrier(data, organizationId, userId);
+    const carrier = await shippingRepo.createCarrier(data, organizationId, userId);
+    await invalidateCache([keys.shipping.carriers(organizationId)]);
+    return carrier;
   }
 
   async updateCarrier(id, organizationId, data) {
@@ -26,12 +31,15 @@ class ShippingService {
       const existing = await shippingRepo.findByCarrierCode(data.code, organizationId);
       if (existing && existing.id !== id) throw new BadRequestError('Carrier code already exists');
     }
-    return shippingRepo.updateCarrier(id, organizationId, data);
+    const carrier = await shippingRepo.updateCarrier(id, organizationId, data);
+    await invalidateCache([keys.shipping.carrier(organizationId, id), keys.shipping.carriers(organizationId)]);
+    return carrier;
   }
 
   async deleteCarrier(id, organizationId) {
     await this.getCarrier(id, organizationId);
-    return shippingRepo.deleteCarrier(id, organizationId);
+    await shippingRepo.deleteCarrier(id, organizationId);
+    await invalidateCache([keys.shipping.carrier(organizationId, id), keys.shipping.carriers(organizationId)]);
   }
 
   // ─── Shipments ────────────────────────────────────────────────────
@@ -59,12 +67,15 @@ class ShippingService {
     if (data.items && data.items.length > 0) {
       await shippingRepo.createShipmentItems(shipment.id, data.items);
     }
+    await invalidateCache([keys.shipping.shipments(organizationId)]);
     return this.getShipment(shipment.id, organizationId);
   }
 
   async updateShipment(id, organizationId, data) {
     await this.getShipment(id, organizationId);
-    return shippingRepo.updateShipment(id, organizationId, data);
+    const shipment = await shippingRepo.updateShipment(id, organizationId, data);
+    await invalidateCache([keys.shipping.shipment(organizationId, id), keys.shipping.shipments(organizationId)]);
+    return shipment;
   }
 
   async dispatchShipment(id, organizationId) {
@@ -81,6 +92,7 @@ class ShippingService {
       description: 'Shipment has been dispatched',
       occurredAt: new Date(),
     });
+    await invalidateCache([keys.shipping.shipment(organizationId, id), keys.shipping.shipments(organizationId)]);
     return updated;
   }
 
@@ -98,18 +110,22 @@ class ShippingService {
       description: 'Shipment has been delivered',
       occurredAt: new Date(),
     });
+    await invalidateCache([keys.shipping.shipment(organizationId, id), keys.shipping.shipments(organizationId)]);
     return updated;
   }
 
   async addTrackingEvent(id, organizationId, data) {
     const shipment = await shippingRepo.findShipmentById(id, organizationId);
     if (!shipment) throw new NotFoundError('Shipment not found');
-    return shippingRepo.createTrackingEvent(id, data);
+    const event = await shippingRepo.createTrackingEvent(id, data);
+    await invalidateCache([keys.shipping.shipment(organizationId, id), keys.shipping.shipments(organizationId)]);
+    return event;
   }
 
   async deleteShipment(id, organizationId) {
     await this.getShipment(id, organizationId);
-    return shippingRepo.deleteShipment(id, organizationId);
+    await shippingRepo.deleteShipment(id, organizationId);
+    await invalidateCache([keys.shipping.shipment(organizationId, id), keys.shipping.shipments(organizationId)]);
   }
 
   // ─── Rates (stub - integrates with carrier APIs later) ────────────

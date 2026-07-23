@@ -38,6 +38,13 @@ const keys = {
     permissions: (orgId, roleId) =>
       `${CACHE_PREFIX}:${orgId}:role:permissions:${roleId}`,
   },
+  shipping: {
+    carrier: (orgId, id) => `${CACHE_PREFIX}:${orgId}:shipping:carrier:${id}`,
+    carriers: (orgId) => `${CACHE_PREFIX}:${orgId}:shipping:carriers:*`,
+    shipment: (orgId, id) => `${CACHE_PREFIX}:${orgId}:shipping:shipment:${id}`,
+    shipments: (orgId) => `${CACHE_PREFIX}:${orgId}:shipping:shipments:*`,
+    tracking: (orgId, tn) => `${CACHE_PREFIX}:${orgId}:shipping:tracking:${tn}`,
+  },
   dashboard: {
     kpi: (orgId, type) => `${CACHE_PREFIX}:${orgId}:dashboard:kpi:${type}`,
   },

@@ -32,6 +32,7 @@ const authenticate = async (req, res, next) => {
       ...decoded,
       id: decoded.userId || decoded.id,
       organizationId: decoded.orgId || decoded.organizationId,
+      org: decoded.orgId || decoded.organizationId,
     };
     req.token = token;
 
