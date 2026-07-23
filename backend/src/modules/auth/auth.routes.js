@@ -25,6 +25,7 @@ const {
 const { authenticate } = require('../../middleware/auth');
 const { authorize } = require('../../middleware/authorize');
 const { auditLog } = require('../../middleware/auditLog');
+const { cacheAside } = require('../../middleware/cache');
 
 // Public routes
 router.post('/register', registerValidation, register);
@@ -39,7 +40,7 @@ router.post('/change-password', authenticate, auditLog('auth.change_password', {
 router.post('/mfa/setup', authenticate, auditLog('auth.mfa_setup', { auditableType: 'user' }), setupMFA);
 router.post('/mfa/verify', authenticate, verifyMFA);
 router.post('/mfa/disable', authenticate, auditLog('auth.mfa_disable', { auditableType: 'user' }), disableMFA);
-router.get('/me', authenticate, getProfile);
+router.get('/me', authenticate, cacheAside({ key: (req) => `erp:${req.user.org}:user:${req.user.id}:profile`, ttl: 60 }), getProfile);
 router.patch('/me', authenticate, auditLog('auth.update_profile', { auditableType: 'user' }), updateProfile);
 
 module.exports = router;

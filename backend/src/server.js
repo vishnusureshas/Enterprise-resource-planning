@@ -7,6 +7,7 @@ const env = require('./config/env');
 const { redis } = require('./config/redis');
 const logger = require('./config/logger');
 const app = require('./app');
+const { startWorkers, stopWorkers } = require('./jobs');
 
 let server;
 
@@ -39,6 +40,8 @@ async function init() {
   server = app.listen(env.port, () => {
     logger.info(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
   });
+
+  await startWorkers();
 }
 
 init().catch((err) => {
@@ -50,6 +53,7 @@ const shutdown = async (signal) => {
   logger.info(`${signal} received, shutting down gracefully`);
   server?.close(async () => {
     logger.info('HTTP server closed');
+    await stopWorkers();
     try {
       await redis.quit();
       logger.info('Redis connection closed');

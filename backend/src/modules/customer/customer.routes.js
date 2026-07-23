@@ -11,28 +11,29 @@ const {
 const { authenticate } = require('../../middleware/auth');
 const { authorize } = require('../../middleware/authorize');
 const { auditLog } = require('../../middleware/auditLog');
+const { cacheAside } = require('../../middleware/cache');
 
 router.use(authenticate);
 
-router.get('/', authorize('customer:read'), list);
-router.get('/:id', authorize('customer:read'), get);
+router.get('/', authorize('customer:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customers:page:${req.query.page || 1}`, ttl: 300 }), list);
+router.get('/:id', authorize('customer:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customer:${req.params.id}`, ttl: 600 }), get);
 router.post('/', authorize('customer:create'), auditLog('customer.create', { auditableType: 'customer' }), create);
 router.patch('/:id', authorize('customer:update'), auditLog('customer.update', { auditableType: 'customer', auditableId: (req) => req.params.id }), update);
 router.delete('/:id', authorize('customer:delete'), auditLog('customer.delete', { auditableType: 'customer', auditableId: (req) => req.params.id }), remove);
 
-router.get('/:id/addresses', authorize('customer:read'), listAddresses);
+router.get('/:id/addresses', authorize('customer:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customer:${req.params.id}:addresses`, ttl: 600 }), listAddresses);
 router.post('/:id/addresses', authorize('customer:update'), auditLog('customer.address.create', { auditableType: 'customer_address', auditableId: (req) => req.params.id }), createAddress);
 router.patch('/:id/addresses/:addressId', authorize('customer:update'), auditLog('customer.address.update', { auditableType: 'customer_address', auditableId: (req) => req.params.addressId }), updateAddress);
 router.delete('/:id/addresses/:addressId', authorize('customer:update'), auditLog('customer.address.delete', { auditableType: 'customer_address', auditableId: (req) => req.params.addressId }), deleteAddress);
 
-router.get('/:id/contacts', authorize('customer:read'), listContacts);
+router.get('/:id/contacts', authorize('customer:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customer:${req.params.id}:contacts`, ttl: 600 }), listContacts);
 router.post('/:id/contacts', authorize('customer:update'), auditLog('customer.contact.create', { auditableType: 'customer_contact', auditableId: (req) => req.params.id }), createContact);
 router.patch('/:id/contacts/:contactId', authorize('customer:update'), auditLog('customer.contact.update', { auditableType: 'customer_contact', auditableId: (req) => req.params.contactId }), updateContact);
 router.delete('/:id/contacts/:contactId', authorize('customer:update'), auditLog('customer.contact.delete', { auditableType: 'customer_contact', auditableId: (req) => req.params.contactId }), deleteContact);
 
-router.get('/:id/notes', authorize('customer:read'), listNotes);
+router.get('/:id/notes', authorize('customer:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customer:${req.params.id}:notes`, ttl: 300 }), listNotes);
 router.post('/:id/notes', authorize('customer:update'), auditLog('customer.note.create', { auditableType: 'customer_note', auditableId: (req) => req.params.id }), createNote);
 
-router.get('/:id/orders', authorize('order:read'), listOrders);
+router.get('/:id/orders', authorize('order:read'), cacheAside({ key: (req) => `erp:${req.user.org}:customer:${req.params.id}:orders:page:${req.query.page || 1}`, ttl: 120 }), listOrders);
 
 module.exports = router;

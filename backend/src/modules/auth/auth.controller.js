@@ -1,4 +1,5 @@
 const authService = require('./auth.service');
+const jwt = require('jsonwebtoken');
 const { asyncHandler } = require('../../middleware/errorHandler');
 const { validate } = require('../../middleware/validate');
 const schemas = require('./auth.validation');
@@ -32,7 +33,19 @@ const login = asyncHandler(async (req, res) => {
 
 const refresh = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
-  const result = await authService.refresh(req.user.id, refreshToken);
+  const authHeader = req.headers.authorization;
+  let userId;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    try {
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.userId) userId = decoded.userId;
+    } catch {}
+  }
+  if (!userId) {
+    return res.status(401).json({ success: false, error: 'Invalid or missing access token' });
+  }
+  const result = await authService.refresh(userId, refreshToken);
   res.json({
     success: true,
     data: result,
